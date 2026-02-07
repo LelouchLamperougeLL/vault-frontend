@@ -8,6 +8,8 @@
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -78,7 +80,11 @@
         const { useState, useMemo, useEffect, useCallback, useRef } = React;
         
         // --- CONFIG ---
-        const API_URL = 'http://localhost:5000/api'; // Point to your backend
+        const supabase = window.supabase.createClient(
+              "https://ugllcdapuzihpkgcoaxj.supabase.co",
+              "sb_publishable_swo47XupsFxzGppR4kzGtA_ydXaDJ98"
+              );
+ // Point to your backend
 
         // --- ICONS ---
         const IconBase = ({ size = 20, className, children, ...props }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>);
@@ -173,29 +179,32 @@
             if (!isOpen) return null;
 
             const handleSubmit = async (e) => {
-                e.preventDefault();
-                setError('');
-                const endpoint = isRegister ? '/auth/register' : '/auth/login';
-                try {
-                    const res = await fetch(`${API_URL}${endpoint}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Authentication failed');
-                    
-                    if (isRegister) {
-                        setIsRegister(false); // Switch to login after register
-                        alert("Registration successful! Please login.");
-                    } else {
-                        onLogin(data.token);
-                        onClose();
-                    }
-                } catch (err) {
-                    setError(err.message);
-                }
-            };
+  e.preventDefault();
+  setError("");
+
+  try {
+    if (isRegister) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      if (error) throw error;
+      alert("Registered! Now login.");
+      setIsRegister(false);
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) throw error;
+      onLogin(data.session);
+      onClose();
+    }
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
 
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
@@ -281,7 +290,8 @@
         // --- MAIN APP ---
         function App() {
             // -- State --
-            const [token, setToken] = useState(localStorage.getItem('vault_token') || null);
+            const [session, setSession] = useState(null);
+
             const [vault, setVault] = useState({ watched: {}, watchlist: {} });
             const [apiKeys, setApiKeys] = useState(DEFAULT_KEYS);
             const [theme, setTheme] = useState('dark');
@@ -318,68 +328,55 @@
             useEffect(() => { if (theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }, [theme]);
 
             // -- AUTH & SYNC --
-            const handleLogin = (newToken) => {
-                setToken(newToken);
-                localStorage.setItem('vault_token', newToken);
-            };
+            const handleLogin = (session) => {
+  setSession(session);
+};
 
-            const handleLogout = () => {
-                setToken(null);
-                localStorage.removeItem('vault_token');
-                // Optional: Clear vault or keep local copy? Let's keep for offline viewing.
-            };
+
+           const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setSession(null);
+};
+
 
             // Cloud Fetch Effect (The user requested snippet logic)
-            useEffect(() => {
-                if (!token) return;
-                
-                setSyncStatus('syncing');
-                fetch(`${API_URL}/vault`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                .then(res => {
-                    if (res.status === 401 || res.status === 403) {
-                        handleLogout();
-                        throw new Error("Session expired");
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    // Transform Array (Backend) -> Object (Frontend)
-                    if (Array.isArray(data)) {
-                        const newState = { watched: {}, watchlist: {} };
-                        data.forEach(row => {
-                            // We assume row.user_meta contains the full item data for now to simplify frontend
-                            // Ideally, backend stores only meta and we fetch details, but for this 'v7' we assume
-                            // the POST saves the full object into user_meta.
-                            const item = row.user_meta; 
-                            if (item.userMeta?.status === 'watched') newState.watched[row.imdb_id] = item;
-                            else if (item.userMeta?.status === 'watchlist') newState.watchlist[row.imdb_id] = item;
-                        });
-                        setVault(newState);
-                    }
-                    setSyncStatus('idle');
-                })
-                .catch(err => {
-                    console.error("Sync failed:", err);
-                    setSyncStatus('error');
-                });
-            }, [token]);
+           useEffect(() => {
+  if (!session) return;
+
+  supabase
+    .from("vault_items")
+    .select("*")
+    .then(({ data, error }) => {
+      if (error) return console.error(error);
+
+      const newVault = { watched: {}, watchlist: {} };
+
+      data.forEach(row => {
+        const item = row.user_meta;
+        if (item.userMeta.status === "watched")
+          newVault.watched[row.imdb_id] = item;
+        else
+          newVault.watchlist[row.imdb_id] = item;
+      });
+
+      setVault(newVault);
+    });
+}, [session]);
+
+
 
             // Save Item to Cloud
             const saveToCloud = async (imdbId, item) => {
-                if (!token) return;
-                try {
-                    await fetch(`${API_URL}/vault`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}` 
-                        },
-                        body: JSON.stringify({ imdbId, userMeta: item }) // Saving full item as userMeta for now
-                    });
-                } catch (e) { console.error("Save failed", e); }
-            };
+  if (!session) return;
+
+  await supabase.from("vault_items").upsert({
+    user_id: session.user.id,
+    imdb_id: imdbId,
+    user_meta: item,
+    updated_at: new Date()
+  });
+};
+
 
             const updateItem = useCallback((imdbID, updater) => {
                 setVault(prev => {
