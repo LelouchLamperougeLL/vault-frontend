@@ -295,7 +295,6 @@
             const [vault, setVault] = useState({ watched: {}, watchlist: {} });
             const [apiKeys, setApiKeys] = useState(DEFAULT_KEYS);
             const [theme, setTheme] = useState('dark');
-            const [apiCache, setApiCache] = useState({});
             
             const [showAuth, setShowAuth] = useState(false);
             const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, error
@@ -317,11 +316,6 @@
                 const localKeys = localStorage.getItem('vault_v5_keys');
                 if (localKeys) setApiKeys(JSON.parse(localKeys));
                 
-                // If no session, load local data as fallback
-                if (!session) {
-                    const localVault = localStorage.getItem('vault_v6_data');
-                    if (localVault) setVault(JSON.parse(localVault));
-                }
             }, []);
 
             // -- Session Restore Effect --
@@ -381,6 +375,11 @@
                   });
 
                   setVault(newVault);
+                  localStorage.setItem("vault_v6_data", JSON.stringify(newVault));
+                })
+                .catch(err => {
+                    setSyncStatus("error");
+                    console.error(err);
                 });
             }, [session]);
 
@@ -564,7 +563,18 @@
                          </div>
                      )}
 
-                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKeys={apiKeys} setApiKeys={setApiKeys} theme={theme} setTheme={setTheme} onReset={() => setVault({watched:{}, watchlist:{}})} />
+                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKeys={apiKeys} setApiKeys={setApiKeys} theme={theme} setTheme={setTheme} 
+                        onReset={async () => {
+                          if (!session) return;
+
+                          await supabase
+                            .from("vault_items")
+                            .delete()
+                            .eq("user_id", session.user.id);
+
+                          setVault({ watched: {}, watchlist: {} });
+                        }}
+                    />
                 </div>
             );
         }
