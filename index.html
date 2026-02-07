@@ -82,9 +82,9 @@
         // --- CONFIG ---
         const supabase = window.supabase.createClient(
               "https://ugllcdapuzihpkgcoaxj.supabase.co",
-              "sb_publishable_swo47XupsFxzGppR4kzGtA_ydXaDJ98"
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbGxjZGFwdXppaHBrZ2NvYXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTA3NzksImV4cCI6MjA4NjA2Njc3OX0.73I1cW1fqRUha5_6spK7C8m-SXUHQQfyjmcbNNbdfCI"
               );
- // Point to your backend
+        // Point to your backend
 
         // --- ICONS ---
         const IconBase = ({ size = 20, className, children, ...props }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>);
@@ -179,31 +179,31 @@
             if (!isOpen) return null;
 
             const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+              e.preventDefault();
+              setError("");
 
-  try {
-    if (isRegister) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password
-      });
-      if (error) throw error;
-      alert("Registered! Now login.");
-      setIsRegister(false);
-    } else {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
-      onLogin(data.session);
-      onClose();
-    }
-  } catch (err) {
-    setError(err.message);
-  }
-};
+              try {
+                if (isRegister) {
+                  const { error } = await supabase.auth.signUp({
+                    email,
+                    password
+                  });
+                  if (error) throw error;
+                  alert("Registered! Now login.");
+                  setIsRegister(false);
+                } else {
+                  const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                  });
+                  if (error) throw error;
+                  onLogin(data.session);
+                  onClose();
+                }
+              } catch (err) {
+                setError(err.message);
+              }
+            };
 
 
             return (
@@ -317,11 +317,26 @@
                 const localKeys = localStorage.getItem('vault_v5_keys');
                 if (localKeys) setApiKeys(JSON.parse(localKeys));
                 
-                // If no token, load local data as fallback
-                if (!token) {
+                // If no session, load local data as fallback
+                if (!session) {
                     const localVault = localStorage.getItem('vault_v6_data');
                     if (localVault) setVault(JSON.parse(localVault));
                 }
+            }, []);
+
+            // -- Session Restore Effect --
+            useEffect(() => {
+                supabase.auth.getSession().then(({ data }) => {
+                    setSession(data.session);
+                });
+
+                const { data: listener } = supabase.auth.onAuthStateChange(
+                    (_event, session) => {
+                        setSession(session);
+                    }
+                );
+
+                return () => listener.subscription.unsubscribe();
             }, []);
 
             useEffect(() => { localStorage.setItem('vault_v5_keys', JSON.stringify(apiKeys)); }, [apiKeys]);
@@ -329,53 +344,61 @@
 
             // -- AUTH & SYNC --
             const handleLogin = (session) => {
-  setSession(session);
-};
+              setSession(session);
+            };
 
 
            const handleLogout = async () => {
-  await supabase.auth.signOut();
-  setSession(null);
-};
+              await supabase.auth.signOut();
+              setSession(null);
+            };
 
 
             // Cloud Fetch Effect (The user requested snippet logic)
            useEffect(() => {
-  if (!session) return;
+              if (!session) return;
 
-  supabase
-    .from("vault_items")
-    .select("*")
-    .then(({ data, error }) => {
-      if (error) return console.error(error);
+              setSyncStatus("syncing");
 
-      const newVault = { watched: {}, watchlist: {} };
+              supabase
+                .from("vault_items")
+                .select("*")
+                .then(({ data, error }) => {
+                  if (error) {
+                    setSyncStatus("error");
+                    return console.error(error);
+                  }
+                  
+                  setSyncStatus("idle");
+                  const newVault = { watched: {}, watchlist: {} };
 
-      data.forEach(row => {
-        const item = row.user_meta;
-        if (item.userMeta.status === "watched")
-          newVault.watched[row.imdb_id] = item;
-        else
-          newVault.watchlist[row.imdb_id] = item;
-      });
+                  data.forEach(row => {
+                    const item = row.user_meta;
+                    if (item.userMeta.status === "watched")
+                      newVault.watched[row.imdb_id] = item;
+                    else
+                      newVault.watchlist[row.imdb_id] = item;
+                  });
 
-      setVault(newVault);
-    });
-}, [session]);
+                  setVault(newVault);
+                });
+            }, [session]);
 
 
 
             // Save Item to Cloud
             const saveToCloud = async (imdbId, item) => {
-  if (!session) return;
+              if (!session) return;
 
-  await supabase.from("vault_items").upsert({
-    user_id: session.user.id,
-    imdb_id: imdbId,
-    user_meta: item,
-    updated_at: new Date()
-  });
-};
+              const { error } = await supabase.from("vault_items").upsert({
+                user_id: session.user.id,
+                imdb_id: imdbId,
+                user_meta: item,
+                updated_at: new Date()
+              });
+              
+              if (error) console.error("Save failed", error);
+            };
 
 
             const updateItem = useCallback((imdbID, updater) => {
@@ -401,7 +424,7 @@
 
                     return { watched: nextWatched, watchlist: nextWatchlist };
                 });
-            }, [token]);
+            }, [session]);
 
             // ... (Rest of the bulk actions logic remains the same, just add cloud deletes if needed)
             const handleBulkAction = (action) => {
@@ -465,7 +488,7 @@
                             <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500" />
                          </div>
                          <div className="flex items-center gap-2">
-                             {!token ? (
+                             {!session ? (
                                  <button onClick={() => setShowAuth(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors">
                                      <LogIn size={16} /> Login
                                  </button>
