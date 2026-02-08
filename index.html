@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Vault v7 - Cloud Edition</title>
+    <title>The Vault v7.4 - Cloud Edition</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -80,11 +80,10 @@
         const { useState, useMemo, useEffect, useCallback, useRef } = React;
         
         // --- CONFIG ---
-        const supabase = window.supabase.createClient(
+        const supabaseClient = window.supabase.createClient(
               "https://ugllcdapuzihpkgcoaxj.supabase.co",
               "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbGxjZGFwdXppaHBrZ2NvYXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTA3NzksImV4cCI6MjA4NjA2Njc3OX0.73I1cW1fqRUha5_6spK7C8m-SXUHQQfyjmcbNNbdfCI"
-              );
-        // Point to your backend
+        );
 
         // --- ICONS ---
         const IconBase = ({ size = 20, className, children, ...props }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>);
@@ -109,6 +108,11 @@
         const CheckSquare = (p) => <IconBase {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></IconBase>;
         const LogIn = (p) => <IconBase {...p}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></IconBase>;
         const User = (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>;
+        const Eye = (p) => <IconBase {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const EyeOff = (p) => <IconBase {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></IconBase>;
+        const Clock = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
+        const TrendingUp = (p) => <IconBase {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconBase>;
+        const Grid = (p) => <IconBase {...p}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></IconBase>;
 
         // Custom Vault Logo
         const VaultLogoIcon = (p) => (
@@ -133,7 +137,6 @@
         // --- CONSTANTS ---
         const DEFAULT_KEYS = { omdb: '5591108c', tmdb: '68b27c1f85725736f0aec18b903197b0', rapid: '9782bOaf7fmsh8b54c22e5cOaf5cp13e6e8jsn8e2e765657a5' };
         
-        // 🔥 A. SMART_LISTS (huge upgrade)
         const SMART_LISTS = [
             { id: 'top_rated', label: 'Top Rated', icon: Star, filter: item => item.userMeta?.ratings?.overall >= 9 },
             { id: 'rewatch', label: 'Rewatch Worthy', icon: Repeat, filter: item => item.userMeta?.rewatchCount > 0 },
@@ -161,6 +164,58 @@
           } catch (e) { console.warn("Cache quota exceeded"); }
         };
 
+        // 3️⃣ Ratings & MAL Helpers
+        const normalizeRatings = (item) => {
+            const ratings = {
+                imdb: { rating: item.imdbRating, votes: item.imdbVotes },
+                rotten: null,
+                metacritic: null
+            };
+            item.Ratings?.forEach(r => {
+                if (r.Source === "Rotten Tomatoes") ratings.rotten = r.Value;
+                if (r.Source === "Metacritic") ratings.metacritic = r.Value;
+            });
+            return ratings;
+        };
+
+        const fetchMAL = async (title) => {
+            try {
+                const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`);
+                const json = await res.json();
+                return json.data?.[0];
+            } catch (e) { console.error("MAL Fetch Error", e); return null; }
+        };
+
+        // Cloud Throttle Queue
+        const cloudQueue = {
+            current: new Map(),
+            timer: null
+        };
+        const saveToCloudThrottled = (id, item, session) => {
+            if (!session) return;
+            cloudQueue.current.set(id, item);
+            
+            if (cloudQueue.timer) clearTimeout(cloudQueue.timer);
+            
+            cloudQueue.timer = setTimeout(async () => {
+                const batch = [];
+                cloudQueue.current.forEach((val, key) => {
+                    batch.push({
+                        user_id: session.user.id,
+                        imdb_id: key,
+                        user_meta: val,
+                        updated_at: new Date()
+                    });
+                });
+                cloudQueue.current.clear();
+                
+                if (batch.length > 0) {
+                     const { error } = await supabaseClient.from("vault_items").upsert(batch);
+                     if (error) console.error("Batch save failed", error);
+                }
+            }, 2000); 
+        };
+
         // --- UTILS ---
         const getHighResPoster = (url, width = 600) => {
             if (!url || url === "N/A") return "https://via.placeholder.com/300x450?text=No+Poster";
@@ -171,31 +226,58 @@
             return url;
         };
 
-        // D. migrateItem() (this is critical)
+        // 6️⃣ Smart Image Helper (New)
+        const tmdbImg = (path, size = "w780") => path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
+
+        // 1️⃣ Migrate Item & Extend Data Model
         const migrateItem = (item, status) => {
-            if (item.userMeta) return item;
+            if (item.userMeta && item.meta && item.tmdb && item.meta.ratingsExternal) return item;
             
-            // Preserve old rating if available
-            const oldRating = parseFloat(item.userRating || 0);
-            const isSeries = item.Type === 'series';
+            const isSeries = item.Type === 'series' || item.Genre?.includes('Animation'); // Heuristic
+            const oldRating = parseFloat(item.userRating || item.userMeta?.userRating || 0);
 
             return {
               ...item,
+              
+              // 🔥 Normalized metadata
+              meta: item.meta || {
+                  director: item.Director || "",
+                  genre: item.Genre?.split(",").map(g => g.trim()) || [],
+                  cast: item.Actors
+                    ? item.Actors.split(",").map(a => ({
+                        name: a.trim(),
+                        character: null 
+                      }))
+                    : [],
+                  series: isSeries ? { seasons: [] } : null,
+                  // 3️⃣ New Meta Fields
+                  ratingsExternal: normalizeRatings(item),
+                  anime: null,
+                  asian: null
+              },
+
+              // 🌟 TMDB Namespace (New)
+              tmdb: item.tmdb || {
+                  id: null,
+                  credits: null,
+                  images: null,
+                  seasons: null,
+                  enriched: false
+              },
+
               userMeta: {
-                status,
-                userRating: oldRating, // Keeping this to prevent data loss despite snippet
-                rewatchCount: 0,
-                // Critical logic from snippet D
-                series: isSeries ? {
+                status: status || item.userMeta?.status || 'watchlist',
+                userRating: oldRating, 
+                rewatchCount: item.userMeta?.rewatchCount || 0,
+                series: isSeries ? (item.userMeta?.series || {
                   lastEpisode: { season: 0, episode: 0 },
                   completed: false
-                } : null,
-                // Critical V7 props
-                ratings: { overall: oldRating, story: 0, direction: 0, emotion: 0 },
-                lastUpdated: Date.now(),
-                watchedOn: new Date().toISOString().split('T')[0],
+                }) : null,
+                ratings: item.userMeta?.ratings || { overall: oldRating, story: 0, direction: 0, emotion: 0 },
+                lastUpdated: item.userMeta?.lastUpdated || Date.now(),
+                watchedOn: item.userMeta?.watchedOn || new Date().toISOString().split('T')[0],
                 autoOverall: true,
-                notes: ""
+                notes: item.userMeta?.notes || ""
               }
             };
         };
@@ -215,7 +297,7 @@
 
               try {
                 if (isRegister) {
-                  const { error } = await supabase.auth.signUp({
+                  const { error } = await supabaseClient.auth.signUp({
                     email,
                     password
                   });
@@ -223,7 +305,7 @@
                   alert("Registered! Now login.");
                   setIsRegister(false);
                 } else {
-                  const { data, error } = await supabase.auth.signInWithPassword({
+                  const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email,
                     password
                   });
@@ -326,6 +408,7 @@
             const [vault, setVault] = useState({ watched: {}, watchlist: {} });
             const [apiKeys, setApiKeys] = useState(DEFAULT_KEYS);
             const [theme, setTheme] = useState('dark');
+            const [viewMode, setViewMode] = useState('grid'); // 'grid', 'timeline', 'analytics'
             
             const [showAuth, setShowAuth] = useState(false);
             const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, error
@@ -337,9 +420,159 @@
             const [activeSmartList, setActiveSmartList] = useState(null);
             const [sortBy, setSortBy] = useState('updated');
             const [selectedMovie, setSelectedMovie] = useState(null);
+            const [actorModalData, setActorModalData] = useState(null); // 3️⃣ Actor Modal State
             const [showSettings, setShowSettings] = useState(false);
             const [isSelectMode, setIsSelectMode] = useState(false);
             const [selectedIds, setSelectedIds] = useState([]);
+            
+            // Search Debounce Ref
+            const searchTimeout = useRef(null);
+
+            // 2️⃣ TMDB Enrichment Helpers
+            const fetchTmdbId = async (imdbID, type) => {
+              if (!apiKeys.tmdb) return null;
+              try {
+                  const res = await fetch(`https://api.themoviedb.org/3/find/${imdbID}?api_key=${apiKeys.tmdb}&external_source=imdb_id`);
+                  const json = await res.json();
+                  return type === "movie" ? json.movie_results?.[0]?.id : json.tv_results?.[0]?.id;
+              } catch(e) { console.error("TMDB Find Error", e); return null; }
+            };
+
+            const extractDirectors = (crew, type) => {
+              if (!crew) return [];
+              if (type === "movie") return crew.filter(c => c.job === "Director").map(d => d.name);
+              return crew.filter(c => c.department === "Directing" || c.job === "Executive Producer").slice(0,2).map(d => d.name); 
+            };
+
+            const fetchCredits = async (tmdbId, type) => {
+              const endpoint = type === "movie" ? "movie" : "tv";
+              const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbId}/credits?api_key=${apiKeys.tmdb}`);
+              return await res.json();
+            };
+
+            const normalizeCast = (cast) =>
+              cast.slice(0, 12).map(actor => ({
+                id: actor.id,
+                name: actor.name,
+                character: actor.character,
+                photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : null
+              }));
+
+            const fetchTvDetails = async (tmdbId) => {
+              const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${apiKeys.tmdb}`);
+              return await res.json();
+            };
+
+            const fetchSeasonEpisodes = async (tmdbId, seasonNumber) => {
+              const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNumber}?api_key=${apiKeys.tmdb}`);
+              const json = await res.json();
+              return json.episodes.map(ep => ({
+                episode: ep.episode_number,
+                title: ep.name,
+                airDate: ep.air_date,
+                overview: ep.overview,
+                still: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
+                imdbRating: ep.vote_average ? ep.vote_average.toFixed(1) : null,
+                // Tracking Defaults
+                rating: null,
+                watched: false,
+                watchedOn: null,
+                notes: ""
+              }));
+            };
+
+            // 3️⃣ Actor Logic
+            const fetchFilmography = async (actorId) => {
+                try {
+                    const res = await fetch(`https://api.themoviedb.org/3/person/${actorId}/combined_credits?api_key=${apiKeys.tmdb}`);
+                    const json = await res.json();
+                    return json.cast
+                        .filter(c => c.poster_path && (c.media_type === 'movie' || c.media_type === 'tv'))
+                        .sort((a, b) => b.popularity - a.popularity)
+                        .slice(0, 20); // Top 20
+                } catch(e) { console.error("Filmography error", e); return []; }
+            };
+
+            const onActorClick = async (actor) => {
+                const credits = await fetchFilmography(actor.id);
+                setActorModalData({ name: actor.name, credits, id: actor.id, photo: actor.photo });
+            };
+
+            const searchByPerson = async (query) => {
+              if(!apiKeys.tmdb) return [];
+              try {
+                  const res = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKeys.tmdb}&query=${encodeURIComponent(query)}`);
+                  const json = await res.json();
+                  return json.results.slice(0, 3).map(p => ({
+                      ...p,
+                      media_type: 'person',
+                      Title: p.name,
+                      imdbID: `person_${p.id}` // Fake ID for list key
+                  }));
+              } catch(e) { return []; }
+            };
+
+            // 6️⃣ Unified Enrichment Function
+            const enrichItem = async (item) => {
+                // Check if we need enrichment
+                const needsTmdb = !item.tmdb?.enriched && apiKeys.tmdb;
+                const needsAnime = item.Genre?.includes('Animation') && item.Country?.includes('Japan') && !item.meta.anime;
+                
+                if (!needsTmdb && !needsAnime) return;
+
+                let updates = {};
+
+                // Anime Fetch
+                if (needsAnime) {
+                    const malData = await fetchMAL(item.Title);
+                    if (malData) {
+                        updates.meta = { ...item.meta, anime: { malRating: malData.score, malVotes: malData.scored_by, malId: malData.mal_id, url: malData.url } };
+                    }
+                }
+
+                // TMDB Fetch
+                if (needsTmdb) {
+                    try {
+                        const tmdbId = item.tmdb?.id || await fetchTmdbId(item.imdbID, item.Type === 'series' ? 'tv' : 'movie');
+                        if (tmdbId) {
+                            const credits = await fetchCredits(tmdbId, item.Type === 'series' ? 'tv' : 'movie');
+                            const directors = extractDirectors(credits.crew, item.Type);
+                            const cast = normalizeCast(credits.cast);
+
+                            let seasons = null;
+                            if (item.Type === "series") {
+                                const tv = await fetchTvDetails(tmdbId);
+                                seasons = await Promise.all(
+                                    tv.seasons
+                                        .filter(s => s.season_number > 0)
+                                        .map(async s => ({
+                                            season: s.season_number,
+                                            airDate: s.air_date,
+                                            episodes: await fetchSeasonEpisodes(tmdbId, s.season_number)
+                                        }))
+                                );
+                            }
+                            
+                            updates.meta = {
+                                ...(updates.meta || item.meta),
+                                director: directors.length > 0 ? directors : item.meta.director,
+                                cast: cast,
+                                series: seasons ? { seasons } : item.meta.series
+                            };
+                            updates.tmdb = {
+                                id: tmdbId,
+                                credits: { cast: cast, crew: credits.crew.slice(0,5) },
+                                seasons,
+                                enriched: true
+                            };
+                        }
+                    } catch(e) { console.error("TMDB Enrichment Failed", e); }
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    updateItem(item.imdbID, i => ({ ...i, ...updates }));
+                }
+            };
 
             // -- Initialization --
             useEffect(() => {
@@ -348,15 +581,44 @@
                 const localKeys = localStorage.getItem('vault_v5_keys');
                 if (localKeys) setApiKeys(JSON.parse(localKeys));
                 
+                // Load local data and backfill metadata if missing
+                const localVault = localStorage.getItem('vault_v6_data');
+                if (localVault) {
+                    try {
+                        const parsed = JSON.parse(localVault);
+                        let changed = false;
+                        
+                        // Self-healing migration for existing data
+                        ['watched', 'watchlist'].forEach(listKey => {
+                            if (parsed[listKey]) {
+                                Object.keys(parsed[listKey]).forEach(key => {
+                                    const item = parsed[listKey][key];
+                                    if (!item.tmdb || !item.meta.ratingsExternal) {
+                                        // Run migration on item
+                                        parsed[listKey][key] = migrateItem(item);
+                                        changed = true;
+                                    }
+                                });
+                            }
+                        });
+
+                        setVault(parsed);
+                        if (changed) {
+                            localStorage.setItem('vault_v6_data', JSON.stringify(parsed));
+                        }
+                    } catch (e) {
+                        console.error("Corrupted local vault", e);
+                    }
+                }
             }, []);
 
             // -- Session Restore Effect --
             useEffect(() => {
-                supabase.auth.getSession().then(({ data }) => {
+                supabaseClient.auth.getSession().then(({ data }) => {
                     setSession(data.session);
                 });
 
-                const { data: listener } = supabase.auth.onAuthStateChange(
+                const { data: listener } = supabaseClient.auth.onAuthStateChange(
                     (_event, session) => {
                         setSession(session);
                     }
@@ -375,7 +637,7 @@
 
 
            const handleLogout = async () => {
-              await supabase.auth.signOut();
+              await supabaseClient.auth.signOut();
               setSession(null);
             };
 
@@ -419,7 +681,7 @@
                             setSyncStatus('syncing');
                             
                             // Delete all existing items for this user (Replace logic)
-                            await supabase.from('vault_items').delete().eq('user_id', session.user.id);
+                            await supabaseClient.from('vault_items').delete().eq('user_id', session.user.id);
 
                             // Transform to flat array for upload
                             const items = [];
@@ -436,7 +698,7 @@
                             const chunkSize = 50;
                             for (let i = 0; i < items.length; i += chunkSize) {
                                 const chunk = items.slice(i, i + chunkSize);
-                                const { error } = await supabase.from('vault_items').upsert(chunk);
+                                const { error } = await supabaseClient.from('vault_items').upsert(chunk);
                                 if (error) console.error("Chunk upload error:", error);
                             }
                             
@@ -460,7 +722,7 @@
 
               setSyncStatus("syncing");
 
-              supabase
+              supabaseClient
                 .from("vault_items")
                 .select("*")
                 .then(({ data, error }) => {
@@ -474,10 +736,10 @@
 
                   data.forEach(row => {
                     let item = row.user_meta;
-                    // Migrate item if coming from raw cloud data that might be old
-                    // Heuristic: if userRating > 0 or previously marked as watched, default to watched
+                    // Check for valid status from cloud, else guess
                     const defaultStatus = (item.userRating && parseFloat(item.userRating) > 0) ? 'watched' : 'watchlist';
-                    item = migrateItem(item, defaultStatus); 
+                    const status = item.userMeta?.status || defaultStatus;
+                    item = migrateItem(item, status); 
                     
                     if (item.userMeta?.status === "watched")
                       newVault.watched[row.imdb_id] = item;
@@ -493,22 +755,6 @@
                     console.error(err);
                 });
             }, [session]);
-
-
-
-            // Save Item to Cloud
-            const saveToCloud = async (imdbId, item) => {
-              if (!session) return;
-
-              const { error } = await supabase.from("vault_items").upsert({
-                user_id: session.user.id,
-                imdb_id: imdbId,
-                user_meta: item,
-                updated_at: new Date()
-              });
-              
-              if (error) console.error("Save failed", error);
-            };
 
 
             const updateItem = useCallback((imdbID, updater) => {
@@ -529,12 +775,85 @@
                     if (newStatus === 'watched') nextWatched[imdbID] = updatedItem;
                     else nextWatchlist[imdbID] = updatedItem;
 
-                    // Trigger Cloud Save
-                    saveToCloud(imdbID, updatedItem);
+                    const nextVault = { watched: nextWatched, watchlist: nextWatchlist };
+                    
+                    // Critical Fix 3: Persist to localStorage
+                    localStorage.setItem("vault_v6_data", JSON.stringify(nextVault));
 
-                    return { watched: nextWatched, watchlist: nextWatchlist };
+                    // Trigger Cloud Save (Throttled)
+                    saveToCloudThrottled(imdbID, updatedItem, session);
+
+                    return nextVault;
                 });
             }, [session]);
+
+            // Sync selectedMovie stale data and trigger enrichment for series
+            useEffect(() => {
+                if (!selectedMovie) return;
+                
+                const updated = vault.watched[selectedMovie.imdbID] || vault.watchlist[selectedMovie.imdbID];
+                
+                // If the selected movie updates in the background, update the modal
+                if (updated && updated !== selectedMovie) {
+                    setSelectedMovie(updated);
+                }
+
+                // 🔥 Trigger Enrichment
+                if (updated) {
+                    enrichItem(updated);
+                }
+            }, [vault, selectedMovie]);
+
+            // 1️⃣ Episode Logic
+            const toggleEpisode = (imdbID, seasonNum, epNum) => {
+              updateItem(imdbID, item => {
+                const seasons = item.meta.series.seasons.map(s =>
+                  s.season !== seasonNum
+                    ? s
+                    : {
+                        ...s,
+                        episodes: s.episodes.map(e =>
+                          e.episode !== epNum
+                            ? e
+                            : {
+                                ...e,
+                                watched: !e.watched,
+                                watchedOn: !e.watched
+                                  ? new Date().toISOString()
+                                  : null
+                              }
+                        )
+                      }
+                );
+
+                return {
+                  ...item,
+                  meta: { ...item.meta, series: { seasons } }
+                };
+              });
+            };
+
+            const rateEpisode = (imdbID, seasonNum, epNum, rating) => {
+              updateItem(imdbID, item => ({
+                ...item,
+                meta: {
+                  ...item.meta,
+                  series: {
+                    seasons: item.meta.series.seasons.map(s =>
+                      s.season !== seasonNum
+                        ? s
+                        : {
+                            ...s,
+                            episodes: s.episodes.map(e =>
+                              e.episode === epNum ? { ...e, rating } : e
+                            )
+                          }
+                    )
+                  }
+                }
+              }));
+            };
+
 
             // --- SEARCH LOGIC ---
 
@@ -543,7 +862,7 @@
                 return !!(vault.watched[imdbID] || vault.watchlist[imdbID]);
             }, [vault]);
 
-            // Offline search
+            // Offline search (Improved Ranking)
             const searchOfflineVault = useCallback((query) => {
               const norm = normalize(query);
               if (!norm) return [];
@@ -551,10 +870,14 @@
                 ...Object.values(vault.watched),
                 ...Object.values(vault.watchlist)
               ];
-              return all.filter(item =>
+              const matches = all.filter(item =>
                 normalize(item.Title).includes(norm) ||
                 item.imdbID === query
               );
+              
+              // Sort by recently updated
+              return matches.sort((a, b) => (b.userMeta?.lastUpdated || 0) - (a.userMeta?.lastUpdated || 0));
+
             }, [vault]);
 
             const smartSearch = useCallback(async (query, type = "", year = "") => {
@@ -574,10 +897,18 @@
                     `https://www.omdbapi.com/?apikey=${apiKeys.omdb}&s=${encodeURIComponent(query)}&type=${type}&y=${year}`
                   );
                   const json = await res.json();
-                  if (json.Response === "False") return { source: "none", results: [] };
+                  let results = [];
+                  
+                  if (json.Response === "True") {
+                      results = json.Search;
+                  }
 
-                  // 4. Rank
-                  const ranked = json.Search.sort((a, b) => {
+                  // 4️⃣ Search by Actor (Mix-in)
+                  const people = await searchByPerson(query);
+                  results = [...results, ...people];
+
+                  // 5. Rank
+                  const ranked = results.sort((a, b) => {
                     const exactA = normalize(a.Title) === normalize(query);
                     const exactB = normalize(b.Title) === normalize(query);
                     if (exactA !== exactB) return exactB - exactA;
@@ -617,7 +948,6 @@
                   watchlist: { ...prev.watchlist }
                 };
 
-                // Remove from other list if it exists (implicit move)
                 delete next.watched[imdbID];
                 delete next.watchlist[imdbID];
 
@@ -626,12 +956,15 @@
                 } else {
                   next.watchlist[imdbID] = migrated;
                 }
+                
+                // Persist locally
+                localStorage.setItem("vault_v6_data", JSON.stringify(next));
 
                 return next;
               });
 
-              // 🔁 Cloud sync
-              saveToCloud(imdbID, migrated);
+              // 🔁 Cloud sync (Throttled)
+              saveToCloudThrottled(imdbID, migrated, session);
               setSearchResults([]);
               setSearchQuery('');
             };
@@ -644,14 +977,48 @@
               const { results } = await smartSearch(q);
               setSearchResults(results || []);
             };
+            
+            // Critical Fix 5: Debounced Search Input Handler
+            const handleSearchInput = (value) => {
+                setSearchQuery(value);
+                if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                
+                if (value.length < 3) {
+                    setSearchResults([]);
+                    return;
+                }
+                
+                searchTimeout.current = setTimeout(() => {
+                    handleSearch(value);
+                }, 400); // 400ms delay
+            };
 
-            // ... (Rest of the bulk actions logic remains the same, just add cloud deletes if needed)
-            const handleBulkAction = (action) => {
-               // Simplified for brevity - assumes local update first
-               // In a real app, you'd loop through selectedIds and call API delete endpoints
-               alert("Bulk actions locally updated. Refresh to sync from cloud.");
-               setIsSelectMode(false);
-               setSelectedIds([]);
+            // Fix Bulk Actions
+            const handleBulkAction = async (action) => {
+               if (action === 'delete') {
+                    if (!confirm(`Delete ${selectedIds.length} items?`)) return;
+                    
+                    const nextVault = { ...vault };
+                    const nextWatched = { ...nextVault.watched };
+                    const nextWatchlist = { ...nextVault.watchlist };
+                    
+                    selectedIds.forEach(id => {
+                        delete nextWatched[id];
+                        delete nextWatchlist[id];
+                    });
+                    
+                    const newVal = { watched: nextWatched, watchlist: nextWatchlist };
+                    setVault(newVal);
+                    localStorage.setItem("vault_v6_data", JSON.stringify(newVal));
+                    
+                    if (session) {
+                        const { error } = await supabaseClient.from('vault_items').delete().in('imdb_id', selectedIds).eq('user_id', session.user.id);
+                        if (error) console.error("Cloud delete error", error);
+                    }
+                    
+                    setIsSelectMode(false);
+                    setSelectedIds([]);
+               }
             };
 
             const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -659,13 +1026,34 @@
             // -- Computed Data (Same as v6) --
             // B. Unified allItems search space
             const allItems = useMemo(() => [...Object.values(vault.watched), ...Object.values(vault.watchlist)], [vault]);
+            
+            // 4️⃣ Analytics with Episode Data
             const analytics = useMemo(() => {
                 const total = allItems.length;
-                if (total === 0) return { avgRating: 0, totalRewatch: 0, watchedCount: 0 };
+                if (total === 0) return { avgRating: 0, totalRewatch: 0, watchedCount: 0, watchedEpisodes: 0, avgEpisodeRating: 0 };
+                
                 const watched = Object.values(vault.watched);
                 const avgRating = watched.reduce((acc, curr) => acc + (curr.userMeta?.ratings?.overall || 0), 0) / (watched.length || 1);
                 const totalRewatch = watched.reduce((acc, curr) => acc + (curr.userMeta?.rewatchCount || 0), 0);
-                return { avgRating: avgRating.toFixed(1), totalRewatch, watchedCount: watched.length };
+                
+                // Episode Stats
+                const eps = allItems
+                    .filter(i => i.Type === "series" && i.meta?.series?.seasons)
+                    .flatMap(i => i.meta.series.seasons.flatMap(s => s.episodes || []));
+
+                const watchedEps = eps.filter(e => e.watched);
+                const ratedEps = eps.filter(e => e.rating > 0);
+                const avgEpRating = ratedEps.length > 0 
+                    ? ratedEps.reduce((a, e) => a + (e.rating || 0), 0) / ratedEps.length
+                    : 0;
+
+                return { 
+                    avgRating: avgRating.toFixed(1), 
+                    totalRewatch, 
+                    watchedCount: watched.length,
+                    watchedEpisodes: watchedEps.length,
+                    avgEpisodeRating: avgEpRating.toFixed(1)
+                };
             }, [allItems, vault]);
 
             const filteredItems = useMemo(() => {
@@ -689,6 +1077,67 @@
                 });
             }, [allItems, searchQuery, activeFilter, activeSmartList, sortBy]);
 
+            // 1️⃣ Timeline Builder
+            const timelineEvents = useMemo(() => {
+                const events = [];
+                Object.values(vault.watched).forEach(item => {
+                    events.push({
+                        type: "movie",
+                        imdbID: item.imdbID,
+                        title: item.Title,
+                        watchedOn: item.userMeta.watchedOn,
+                        rating: item.userMeta.ratings.overall,
+                        poster: item.Poster
+                    });
+                });
+                allItems.filter(i => i.Type === "series" && i.meta?.series?.seasons).forEach(series => {
+                    series.meta.series.seasons.forEach(s => s.episodes.forEach(e => {
+                        if (e.watched) {
+                            events.push({
+                                type: "episode",
+                                imdbID: series.imdbID,
+                                title: `${series.Title} • S${s.season}E${e.episode}`,
+                                watchedOn: e.watchedOn,
+                                rating: e.rating,
+                                poster: series.Poster
+                            });
+                        }
+                    }));
+                });
+                return events.sort((a, b) => new Date(b.watchedOn) - new Date(a.watchedOn));
+            }, [vault, allItems]);
+
+            // 2️⃣ Analytics Builder
+            const peopleStats = useMemo(() => {
+                const map = {};
+                allItems.forEach(item => {
+                    if (Array.isArray(item.meta?.director)) {
+                        item.meta.director.forEach(name => {
+                            map[name] ??= { movies: 0, avgRating: [], type: "director" };
+                            map[name].movies++;
+                            if(item.userMeta.ratings.overall > 0) map[name].avgRating.push(item.userMeta.ratings.overall);
+                        });
+                    } else if (item.meta?.director && item.meta.director !== "N/A") {
+                         const name = item.meta.director;
+                         map[name] ??= { movies: 0, avgRating: [], type: "director" };
+                         map[name].movies++;
+                         if(item.userMeta.ratings.overall > 0) map[name].avgRating.push(item.userMeta.ratings.overall);
+                    }
+
+                    item.meta?.cast?.forEach(actor => {
+                        map[actor.name] ??= { movies: 0, avgRating: [], type: "actor" };
+                        map[actor.name].movies++;
+                        if(item.userMeta.ratings.overall > 0) map[actor.name].avgRating.push(item.userMeta.ratings.overall);
+                    });
+                });
+                return Object.entries(map).map(([name, d]) => ({
+                    name,
+                    type: d.type,
+                    count: d.movies,
+                    avgRating: d.avgRating.length > 0 ? (d.avgRating.reduce((a, b) => a + b, 0) / d.avgRating.length) : 0
+                })).filter(p => p.count > 1).sort((a, b) => b.count - a.count).slice(0, 8);
+            }, [allItems]);
+
             // ... (Components: DetailModal, SettingsModal, MovieCard - same as v6, simplified here)
             // Reusing components from context but ensuring they use the new props
 
@@ -704,68 +1153,14 @@
                                  <span className="text-2xl font-black tracking-[0.15em] leading-none uppercase text-gray-900 dark:text-white font-sans">Vault</span>
                              </div>
                          </div>
-                         <div className="flex-1 max-w-md mx-4 hidden md:block relative">
-                            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                            <input 
-                                type="text" 
-                                placeholder="Search movies or series..." 
-                                value={searchQuery} 
-                                onChange={async (e) => {
-                                    setSearchQuery(e.target.value);
-                                    if (e.target.value.length > 2) {
-                                      await handleSearch(e.target.value);
-                                    } else {
-                                      setSearchResults([]);
-                                    }
-                                }}
-                                className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500" 
-                            />
-                            
-                            {searchResults.length > 0 && (
-                              <div className="absolute z-50 mt-2 w-full bg-white dark:bg-dark-card rounded-xl shadow-xl max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700">
-                                {searchResults.map(item => {
-                                  const inVault = existsInVault(item.imdbID);
-                                  return (
-                                    <div
-                                        key={item.imdbID}
-                                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                                    >
-                                        <div className="flex-1 min-w-0 mr-2">
-                                        <p className="font-semibold text-sm truncate dark:text-white">{item.Title}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {item.Year} • {item.Type}
-                                        </p>
-                                        </div>
-
-                                        <div className="flex gap-2 shrink-0">
-                                        {inVault ? (
-                                            <span className="text-xs px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 font-medium cursor-default">
-                                                In Vault
-                                            </span>
-                                        ) : (
-                                            <>
-                                            <button
-                                                onClick={() => addToVault(item.imdbID, "watchlist")}
-                                                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
-                                            >
-                                                Watchlist
-                                            </button>
-
-                                            <button
-                                                onClick={() => addToVault(item.imdbID, "watched")}
-                                                className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium"
-                                            >
-                                                Watched
-                                            </button>
-                                            </>
-                                        )}
-                                        </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                         
+                         {/* View Switcher */}
+                         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1 mx-4">
+                             <button onClick={() => setViewMode('grid')} className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><Grid size={18}/></button>
+                             <button onClick={() => setViewMode('timeline')} className={`p-2 rounded-full transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><Clock size={18}/></button>
+                             <button onClick={() => setViewMode('analytics')} className={`p-2 rounded-full transition-all ${viewMode === 'analytics' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><BarChart size={18}/></button>
                          </div>
+
                          <div className="flex items-center gap-2">
                              {!session ? (
                                  <button onClick={() => setShowAuth(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors">
@@ -782,76 +1177,380 @@
                     </header>
 
                     <main className="max-w-7xl mx-auto px-4 pt-8">
-                        {/* Analytics Cards */}
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><Film size={20}/></div>
-                                <div><div className="text-xs text-gray-500 uppercase font-bold">Total Items</div><div className="text-xl font-black dark:text-white">{allItems.length}</div></div>
-                            </div>
-                            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 rounded-lg"><Star size={20}/></div>
-                                <div><div className="text-xs text-gray-500 uppercase font-bold">Avg Rating</div><div className="text-xl font-black dark:text-white">{analytics.avgRating}</div></div>
-                            </div>
-                        </div>
-
-                        {/* List Filters */}
-                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                             <div className="flex items-center gap-2 overflow-x-auto">
-                                {[ { id: 'all', label: 'Everything' }, { id: 'movies', label: 'Movies' }, { id: 'series', label: 'TV Shows' } ].map(f => (
-                                    <button key={f.id} onClick={() => { setActiveFilter(f.id); setActiveSmartList(null); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === f.id && !activeSmartList ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}>{f.label}</button>
-                                ))}
-                                {SMART_LISTS.map(list => (
-                                     <button key={list.id} onClick={() => { setActiveSmartList(list.id === activeSmartList ? null : list.id); setActiveFilter('all'); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${activeSmartList === list.id ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}><list.icon size={14}/> {list.label}</button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Movies Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
-                            {filteredItems.map(item => (
-                                <div key={item.imdbID} onClick={() => setSelectedMovie(item)} className="group relative bg-white dark:bg-dark-card rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-all cursor-pointer border border-light-border dark:border-dark-border">
-                                    <div className="relative aspect-[2/3] overflow-hidden bg-gray-900">
-                                        <img src={getHighResPoster(item.Poster, 400)} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
-                                        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                                             {item.userMeta?.status === 'watched' && <span className="bg-green-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg"><CheckCircle size={10} /></span>}
-                                        </div>
-                                        {item.userMeta?.ratings?.overall > 0 && <div className="absolute bottom-2 left-2 bg-yellow-500 text-white px-1.5 py-0.5 rounded text-xs font-bold flex items-center gap-1 shadow-lg"><Star size={10} fill="currentColor" /> {item.userMeta.ratings.overall}</div>}
+                        {/* Conditional Rendering based on ViewMode */}
+                        
+                        {viewMode === 'grid' && (
+                            <>
+                                {/* Analytics Cards (Compact) */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><Film size={20}/></div>
+                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Total Items</div><div className="text-xl font-black dark:text-white">{allItems.length}</div></div>
                                     </div>
-                                    <div className="p-3">
-                                        <h3 className="text-gray-900 dark:text-white font-bold text-sm line-clamp-1">{item.Title}</h3>
-                                        <div className="text-[10px] text-gray-500 dark:text-gray-400 flex justify-between mt-1"><span>{item.Year}</span><span>{item.Type === 'series' ? 'TV' : 'Movie'}</span></div>
+                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
+                                        <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 rounded-lg"><Star size={20}/></div>
+                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Avg Rating</div><div className="text-xl font-black dark:text-white">{analytics.avgRating}</div></div>
+                                    </div>
+                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
+                                        <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg"><CheckSquare size={20}/></div>
+                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Ep. Watched</div><div className="text-xl font-black dark:text-white">{analytics.watchedEpisodes}</div></div>
+                                    </div>
+                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg"><BarChart size={20}/></div>
+                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Ep. Score</div><div className="text-xl font-black dark:text-white">{analytics.avgEpisodeRating}</div></div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+
+                                {/* List Filters & Search */}
+                                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-2 overflow-x-auto">
+                                        {[ { id: 'all', label: 'Everything' }, { id: 'movies', label: 'Movies' }, { id: 'series', label: 'TV Shows' } ].map(f => (
+                                            <button key={f.id} onClick={() => { setActiveFilter(f.id); setActiveSmartList(null); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === f.id && !activeSmartList ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}>{f.label}</button>
+                                        ))}
+                                        {SMART_LISTS.map(list => (
+                                            <button key={list.id} onClick={() => { setActiveSmartList(list.id === activeSmartList ? null : list.id); setActiveFilter('all'); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${activeSmartList === list.id ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}><list.icon size={14}/> {list.label}</button>
+                                        ))}
+                                    </div>
+                                    <div className="relative w-full md:w-64">
+                                        <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search movies, series..." 
+                                            value={searchQuery} 
+                                            onChange={(e) => handleSearchInput(e.target.value)}
+                                            className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500" 
+                                        />
+                                        {searchResults.length > 0 && (
+                                            <div className="absolute z-50 mt-2 w-full bg-white dark:bg-dark-card rounded-xl shadow-xl max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700">
+                                                {searchResults.map((item, idx) => {
+                                                const inVault = item.media_type !== 'person' && existsInVault(item.imdbID);
+                                                if (item.media_type === 'person') {
+                                                    return (
+                                                        <div key={`${item.id}_person_${idx}`} onClick={() => { onActorClick({ id: item.id, name: item.Title, photo: item.profile_path ? `https://image.tmdb.org/t/p/w185${item.profile_path}` : null }); setSearchResults([]); setSearchQuery(''); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 cursor-pointer">
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                                {item.profile_path ? <img src={`https://image.tmdb.org/t/p/w45${item.profile_path}`} className="w-full h-full rounded-full object-cover"/> : <User size={14} />}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold text-sm dark:text-white">{item.Title}</p>
+                                                                <p className="text-xs text-gray-500">Actor • View Credits</p>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                }
+                                                return (
+                                                    <div key={`${item.imdbID}_${idx}`} className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                                        <div className="flex-1 min-w-0 mr-2">
+                                                            <p className="font-semibold text-sm truncate dark:text-white">{item.Title}</p>
+                                                            <p className="text-xs text-gray-500">{item.Year} • {item.Type}</p>
+                                                        </div>
+                                                        <div className="flex gap-2 shrink-0">
+                                                            {inVault ? (
+                                                                <span className="text-xs px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 font-medium cursor-default">In Vault</span>
+                                                            ) : (
+                                                                <>
+                                                                <button onClick={() => addToVault(item.imdbID, "watchlist")} className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium">Watchlist</button>
+                                                                <button onClick={() => addToVault(item.imdbID, "watched")} className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium">Watched</button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Grid Content */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
+                                    {filteredItems.map((item, idx) => (
+                                        <div key={`${item.imdbID}_${idx}`} onClick={() => setSelectedMovie(item)} className="group relative bg-white dark:bg-dark-card rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-all cursor-pointer border border-light-border dark:border-dark-border">
+                                            <div className="relative aspect-[2/3] overflow-hidden bg-gray-900">
+                                                <img src={tmdbImg(item.tmdb?.credits?.images?.posters?.[0]?.file_path, "w342") || getHighResPoster(item.Poster, 400)} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+                                                <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                                                    {item.userMeta?.status === 'watched' && <span className="bg-green-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg"><CheckCircle size={10} /></span>}
+                                                </div>
+                                                {item.userMeta?.ratings?.overall > 0 && <div className="absolute bottom-2 left-2 bg-yellow-500 text-white px-1.5 py-0.5 rounded text-xs font-bold flex items-center gap-1 shadow-lg"><Star size={10} fill="currentColor" /> {item.userMeta.ratings.overall}</div>}
+                                            </div>
+                                            <div className="p-3 space-y-1">
+                                                <h3 className="font-bold text-sm line-clamp-1 dark:text-white">{item.Title}</h3>
+                                                <div className="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
+                                                    <span>{item.Year}</span>
+                                                    <span>•</span>
+                                                    <span>{item.Type === "series" ? "TV Series" : "Movie"}</span>
+                                                </div>
+                                                {item.meta?.director && <div className="text-[11px] text-gray-400 line-clamp-1"><span className="font-semibold">Dir:</span> {Array.isArray(item.meta.director) ? item.meta.director.join(", ") : item.meta.director}</div>}
+                                                <div className="flex flex-wrap gap-1 pt-1">
+                                                    {item.meta?.genre?.slice(0, 2).map(g => <span key={g} className="px-1.5 py-0.5 text-[9px] rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{g}</span>)}
+                                                </div>
+                                                {item.Type === "series" && <div className="text-[10px] text-indigo-400 pt-1 font-medium">{item.meta?.totalSeasons || '?'} seasons</div>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {viewMode === 'timeline' && (
+                            <div className="max-w-2xl mx-auto space-y-6">
+                                <h2 className="text-2xl font-black dark:text-white mb-6">Watch History</h2>
+                                {timelineEvents.length === 0 && <div className="text-center text-gray-500 py-10">No history found. Mark items as watched!</div>}
+                                {timelineEvents.map((ev, idx) => (
+                                    <div key={`${ev.imdbID}-${idx}-${ev.watchedOn}`} className="flex gap-4 p-4 bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm relative">
+                                        <div className="w-16 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                                            <img src={getHighResPoster(ev.poster, 200)} className="w-full h-full object-cover" loading="lazy" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-bold dark:text-white text-base truncate">{ev.title}</h3>
+                                                <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(ev.watchedOn).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${ev.type === 'movie' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>{ev.type}</span>
+                                                {ev.rating > 0 && <span className="text-yellow-500 text-sm font-bold">★ {ev.rating}</span>}
+                                            </div>
+                                        </div>
+                                        {/* Timeline Connector Line */}
+                                        {idx !== timelineEvents.length - 1 && <div className="absolute left-8 top-28 bottom-[-24px] w-0.5 bg-gray-200 dark:bg-gray-800 -z-10"></div>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {viewMode === 'analytics' && (
+                            <div className="space-y-10">
+                                <div>
+                                    <h2 className="text-2xl font-black dark:text-white mb-6 flex items-center gap-2"><User size={24}/> Top Directors & Actors</h2>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {peopleStats.map((p, idx) => (
+                                        <div key={`${p.name}-${idx}`} className="p-4 rounded-xl bg-white dark:bg-dark-card border border-gray-100 dark:border-gray-800 shadow-sm">
+                                            <div className="font-bold dark:text-white truncate">{p.name}</div>
+                                            <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">{p.type}</div>
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-2xl font-black text-indigo-600">{p.count}</span>
+                                                {p.avgRating > 0 && <span className="text-sm font-bold text-yellow-500">★ {p.avgRating.toFixed(1)}</span>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h2 className="text-2xl font-black dark:text-white mb-6">Library Composition</h2>
+                                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+                                        <div className="bg-blue-500 h-full" style={{width: `${(allItems.filter(i=>i.Type==='movie').length / allItems.length * 100) || 0}%`}}></div>
+                                        <div className="bg-purple-500 h-full" style={{width: `${(allItems.filter(i=>i.Type==='series').length / allItems.length * 100) || 0}%`}}></div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Movies ({allItems.filter(i=>i.Type==='movie').length})</span>
+                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500"></div> TV Shows ({allItems.filter(i=>i.Type==='series').length})</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </main>
 
-                     {/* Detail Modal (Simplified for size) */}
+                     {/* Detail Modal (TMDB ENHANCED) */}
                      {selectedMovie && (
                          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                             <div className="bg-white dark:bg-dark-card w-full max-w-lg p-6 rounded-2xl relative">
-                                 <button onClick={() => setSelectedMovie(null)} className="absolute top-4 right-4 text-gray-500"><X/></button>
-                                 <h2 className="text-2xl font-bold dark:text-white mb-4">{selectedMovie.Title}</h2>
-                                 <p className="text-gray-600 dark:text-gray-300 mb-4">{selectedMovie.Plot}</p>
-                                 
-                                 {/* Example of editable field */}
-                                 <div className="mb-4">
-                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
-                                     <div className="flex gap-2">
-                                        <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watched'}}))} className={`flex-1 py-2 rounded border text-sm font-bold ${selectedMovie.userMeta?.status === 'watched' ? 'bg-green-500 text-white' : 'dark:text-white'}`}>Watched</button>
-                                        <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watchlist'}}))} className={`flex-1 py-2 rounded border text-sm font-bold ${selectedMovie.userMeta?.status === 'watchlist' ? 'bg-blue-500 text-white' : 'dark:text-white'}`}>Watchlist</button>
+                             <div className="bg-white dark:bg-dark-card w-full max-w-lg p-6 rounded-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+                                 {/* 6️⃣ High Quality Hero Image */}
+                                 {selectedMovie.tmdb?.enriched && (
+                                     <div className="absolute top-0 left-0 w-full h-48 rounded-t-2xl z-0 overflow-hidden">
+                                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-dark-card z-10"></div>
+                                         <img src={tmdbImg(selectedMovie.tmdb.credits?.images?.backdrops?.[0]?.file_path, "w780") || getHighResPoster(selectedMovie.Poster, 800)} className="w-full h-full object-cover opacity-50" />
                                      </div>
+                                 )}
+                                 
+                                 <button onClick={() => setSelectedMovie(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white z-20"><X/></button>
+                                 <div className="relative z-10 mt-20">
+                                    <h2 className="text-3xl font-black dark:text-white mb-1 leading-tight">{selectedMovie.Title}</h2>
+                                    <p className="text-xs text-gray-500 mb-4">{selectedMovie.Year} • {selectedMovie.Runtime}</p>
+                                    
+                                    {/* 3️⃣ Multi-Source Ratings */}
+                                    {selectedMovie.meta.ratingsExternal && (
+                                        <div className="flex gap-4 mb-6 text-xs font-bold">
+                                            {selectedMovie.meta.ratingsExternal.imdb && selectedMovie.meta.ratingsExternal.imdb.rating && selectedMovie.meta.ratingsExternal.imdb.rating !== "N/A" && (
+                                                <span className="bg-yellow-400/20 text-yellow-600 px-2 py-1 rounded">IMDb {selectedMovie.meta.ratingsExternal.imdb.rating}</span>
+                                            )}
+                                            {selectedMovie.meta.ratingsExternal.rotten && (
+                                                <span className="bg-red-400/20 text-red-600 px-2 py-1 rounded">🍅 {selectedMovie.meta.ratingsExternal.rotten}</span>
+                                            )}
+                                            {selectedMovie.meta.ratingsExternal.metacritic && (
+                                                <span className="bg-green-400/20 text-green-600 px-2 py-1 rounded">MC {selectedMovie.meta.ratingsExternal.metacritic}</span>
+                                            )}
+                                            {/* MAL Rating */}
+                                            {selectedMovie.meta.anime && (
+                                                <a href={selectedMovie.meta.anime.url} target="_blank" className="bg-blue-400/20 text-blue-600 px-2 py-1 rounded hover:bg-blue-400/30">MAL {selectedMovie.meta.anime.malRating || 'N/A'}</a>
+                                            )}
+                                            {/* MDL Placeholder */}
+                                            {selectedMovie.meta.asian && (
+                                                <span className="bg-pink-400/20 text-pink-600 px-2 py-1 rounded">MDL (Link)</span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="mb-6 text-sm text-gray-600 dark:text-gray-300">
+                                        <p className="mb-2 italic opacity-80">{selectedMovie.Plot}</p>
+                                        <div className="flex flex-wrap gap-2 text-xs">
+                                            {selectedMovie.meta?.genre.map(g => <span key={g} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{g}</span>)}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-6">
+                                        <h3 className="font-bold text-sm mb-3 dark:text-white flex items-center gap-2"><User size={14}/> Top Cast</h3>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                                            {selectedMovie.meta?.cast.map((a, idx) => (
+                                            <div key={`${a.id || 'cast'}-${idx}`} onClick={() => { if(a.id) onActorClick(a) }} className={`flex gap-2 items-center group ${a.id ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1 transition-colors' : ''}`}>
+                                                {a.photo ? (
+                                                    <img src={a.photo} className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-700" alt={a.name}/>
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-500">{a.name.charAt(0)}</div>
+                                                )}
+                                                <div className="text-xs flex flex-col justify-center min-w-0">
+                                                    <div className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-400 transition-colors">{a.name}</div>
+                                                    <div className="text-gray-500 truncate">{a.character || "Actor"}</div>
+                                                </div>
+                                            </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {selectedMovie.Type === "series" && (
+                                        selectedMovie.meta?.series?.seasons && selectedMovie.meta.series.seasons.length > 0 ? (
+                                            <div className="mb-6">
+                                                <h3 className="font-bold text-sm mb-3 dark:text-white flex items-center gap-2"><Tv size={14}/> Episodes</h3>
+                                                <div className="space-y-6">
+                                                    {selectedMovie.meta.series.seasons.map(season => (
+                                                    <div key={season.season} className="">
+                                                        <div className="font-bold text-xs text-indigo-400 mb-2 border-b border-gray-100 dark:border-gray-800 pb-1 flex justify-between items-end">
+                                                            <span className="text-sm">Season {season.season}</span>
+                                                            {season.airDate && <span className="text-gray-500 font-normal">{season.airDate.substring(0,4)}</span>}
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                        {season.episodes.map((ep, eIdx) => (
+                                                            <div key={`${ep.episode}-${eIdx}`} className={`flex gap-3 group relative rounded-lg p-2 ${ep.watched ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}>
+                                                                <div className="w-24 h-14 shrink-0 rounded overflow-hidden bg-gray-200 dark:bg-gray-800 relative">
+                                                                    {ep.still ? (
+                                                                        <img src={tmdbImg(ep.still, "w300")} className={`w-full h-full object-cover transition-opacity ${ep.watched ? 'opacity-50 grayscale' : ''}`} />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-[10px]">No Image</div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer" onClick={() => toggleEpisode(selectedMovie.imdbID, season.season, ep.episode)}>
+                                                                        {ep.watched ? <EyeOff className="text-white"/> : <Eye className="text-white"/>}
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div className="flex-1 min-w-0 py-0.5">
+                                                                    <div className="flex justify-between items-start">
+                                                                        <span className={`text-sm font-medium truncate ${ep.watched ? 'text-gray-500 line-through' : 'text-gray-900 dark:text-white'}`}>
+                                                                            <span className="font-mono text-gray-400 mr-2 text-xs">{ep.episode}.</span>{ep.title}
+                                                                        </span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {ep.rating ? (
+                                                                                <span className="text-yellow-500 text-xs font-bold">★ {ep.rating}</span>
+                                                                            ) : (
+                                                                                <div className="opacity-0 group-hover:opacity-100 flex gap-0.5">
+                                                                                    {[1,2,3,4,5].map(r => (
+                                                                                        <button key={r} onClick={() => rateEpisode(selectedMovie.imdbID, season.season, ep.episode, r*2)} className="w-1.5 h-1.5 rounded-full bg-gray-300 hover:bg-yellow-500"></button>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{ep.overview}</p>
+                                                                    <div className="flex justify-between items-center mt-1">
+                                                                        <span className="text-[10px] text-gray-400">{ep.airDate}</span>
+                                                                        {ep.watched && <span className="text-[9px] text-green-500 font-medium bg-green-100 dark:bg-green-900/30 px-1.5 rounded">WATCHED</span>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        </div>
+                                                    </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // Fallback
+                                            selectedMovie.meta?.episodes && (
+                                                <div className="mb-6">
+                                                    <h3 className="font-bold text-sm mb-3 dark:text-white">Episodes (OMDb Legacy)</h3>
+                                                    <div className="text-xs text-gray-500">Upgrade to TMDB for richer data...</div>
+                                                </div>
+                                            )
+                                        )
+                                    )}
+                                    
+                                    {/* Example of editable field */}
+                                    <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <div className="flex gap-2">
+                                            <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watched'}}))} className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${selectedMovie.userMeta?.status === 'watched' ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20' : 'dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Watched</button>
+                                            <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watchlist'}}))} className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${selectedMovie.userMeta?.status === 'watchlist' ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Watchlist</button>
+                                        </div>
+                                    </div>
                                  </div>
                              </div>
                          </div>
                      )}
+
+                    {/* 3️⃣ Actor Filmography Modal */}
+                    {actorModalData && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+                            <div className="bg-white dark:bg-dark-card w-full max-w-2xl h-[80vh] rounded-2xl relative flex flex-col overflow-hidden">
+                                <button onClick={() => setActorModalData(null)} className="absolute top-4 right-4 p-2 bg-black/20 rounded-full text-white hover:bg-black/40 z-10"><X/></button>
+                                
+                                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 shrink-0 bg-white dark:bg-dark-card z-0 relative">
+                                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                                        {actorModalData.photo ? <img src={actorModalData.photo} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl font-bold text-gray-400">{actorModalData.name.charAt(0)}</div>}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black dark:text-white">{actorModalData.name}</h2>
+                                        <p className="text-sm text-gray-500">Filmography</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                        {actorModalData.credits.map((credit, cIdx) => {
+                                            // Handle TMDB to IMDb ID resolution lazily or just skip check
+                                            // Since we don't have IMDb ID here easily without another fetch, we rely on Search title match later or manual
+                                            return (
+                                            <div key={`${credit.id}-${cIdx}`} className="group relative">
+                                                <div className="aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
+                                                    <img src={tmdbImg(credit.poster_path, "w342")} className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" loading="lazy"/>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            // For filmography add, we trigger a search by title since we need IMDb ID
+                                                            // This is a tradeoff for speed vs complexity
+                                                            handleSearch(credit.title || credit.name);
+                                                            setActorModalData(null);
+                                                        }}
+                                                        className="absolute bottom-2 right-2 bg-indigo-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                        title="Find in Vault"
+                                                    >
+                                                        <Search size={12}/>
+                                                    </button>
+                                                </div>
+                                                <h4 className="text-xs font-bold dark:text-white line-clamp-1">{credit.title || credit.name}</h4>
+                                                <p className="text-[10px] text-gray-500">{credit.character}</p>
+                                                <p className="text-[10px] text-gray-600">{(credit.release_date || credit.first_air_date || "").substring(0,4)}</p>
+                                            </div>
+                                        )})}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKeys={apiKeys} setApiKeys={setApiKeys} theme={theme} setTheme={setTheme} 
                         onImport={handleImport}
                         onExport={handleExport}
                         onReset={async () => {
                           if (session) {
-                             await supabase.from("vault_items").delete().eq("user_id", session.user.id);
+                             await supabaseClient.from("vault_items").delete().eq("user_id", session.user.id);
                           }
                           setVault({ watched: {}, watchlist: {} });
                           localStorage.removeItem("vault_v6_data");
