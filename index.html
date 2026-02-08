@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Vault v7.4 - Cloud Edition</title>
+    <title>The Vault v8.0 - Cloud Catalog</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
@@ -68,9 +67,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; }
-        input[type=range]:focus { outline: none; }
     </style>
 </head>
 <body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300 overflow-y-scroll">
@@ -89,30 +85,19 @@
         const IconBase = ({ size = 20, className, children, ...props }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>);
         const Film = (p) => <IconBase {...p}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></IconBase>;
         const Tv = (p) => <IconBase {...p}><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></IconBase>;
-        const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>;
         const Star = ({ fill, ...p }) => <IconBase {...p} fill={fill || "none"}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
         const Search = (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
         const CheckCircle = (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
-        const ListPlus = (p) => <IconBase {...p}><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></IconBase>;
         const X = (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
-        const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
-        const Download = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
         const Settings = (p) => <IconBase {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
-        const RefreshCw = (p) => <IconBase {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></IconBase>;
-        const Edit = (p) => <IconBase {...p}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></IconBase>;
-        const Repeat = (p) => <IconBase {...p}><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></IconBase>;
-        const Zap = (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
-        const Globe = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></IconBase>;
-        const Trash = (p) => <IconBase {...p}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></IconBase>;
-        const BarChart = (p) => <IconBase {...p}><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></IconBase>;
-        const CheckSquare = (p) => <IconBase {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></IconBase>;
         const LogIn = (p) => <IconBase {...p}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></IconBase>;
         const User = (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>;
-        const Eye = (p) => <IconBase {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>;
-        const EyeOff = (p) => <IconBase {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></IconBase>;
-        const Clock = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
-        const TrendingUp = (p) => <IconBase {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconBase>;
-        const Grid = (p) => <IconBase {...p}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></IconBase>;
+        const Database = (p) => <IconBase {...p}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></IconBase>;
+        const Copy = (p) => <IconBase {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></IconBase>;
+        const Plus = (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></IconBase>;
+        const Shield = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></IconBase>;
+        const Eye = (p) => <IconBase {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></IconBase>;
+        const Server = (p) => <IconBase {...p}><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></IconBase>;
 
         // Custom Vault Logo
         const VaultLogoIcon = (p) => (
@@ -125,161 +110,118 @@
                 <circle cx="15" cy="12" r="3" strokeWidth="1.5" />
                 <path d="M15 9V6" strokeLinecap="round" />
                 <path d="M15 15v3" strokeLinecap="round" />
-                <path d="M12.4 10.5L9.8 9" strokeLinecap="round" />
-                <path d="M17.6 10.5L20.2 9" strokeLinecap="round" />
-                <path d="M12.4 13.5L9.8 15" strokeLinecap="round" />
-                <path d="M17.6 13.5L20.2 15" strokeLinecap="round" />
-                <ellipse cx="15" cy="12" rx="1.2" ry="1.8" fill="currentColor" />
-                <path d="M15 11v2" stroke="white" strokeWidth="0.5" className="dark:stroke-gray-900" />
             </IconBase>
         );
 
         // --- CONSTANTS ---
         const DEFAULT_KEYS = { omdb: '5591108c', tmdb: '68b27c1f85725736f0aec18b903197b0', rapid: '9782bOaf7fmsh8b54c22e5cOaf5cp13e6e8jsn8e2e765657a5' };
+        const RAPID_HOST_MDL = "mydramalist-api.p.rapidapi.com"; 
+
+        // --- SQL FOR USER ---
+        const DB_SCHEMA_SQL = `
+-- 1. CATALOG ITEMS (Shared Inventory)
+create table if not exists catalog_items (
+  id uuid default gen_random_uuid() primary key,
+  imdb_id text not null,
+  title text not null,
+  type text check (type in ('movie', 'series', 'anime')),
+  available boolean default true,
+  source text default 'gdrive',
+  quality text[] default '{}', -- e.g. ['1080p', '4K']
+  languages text[] default '{}',
+  subtitles text[] default '{}',
+  meta jsonb default '{}', -- rich metadata (poster, ratings, cast)
+  added_at timestamp default now()
+);
+alter table catalog_items enable row level security;
+create policy "Public read catalog" on catalog_items for select using (true);
+create policy "Owners write catalog" on catalog_items for insert with check (
+  exists (select 1 from user_roles where user_id = auth.uid() and role = 'owner')
+);
+
+-- 2. USER ROLES (RBAC)
+create table if not exists user_roles (
+  user_id uuid references auth.users primary key,
+  role text default 'viewer' check (role in ('owner', 'viewer'))
+);
+alter table user_roles enable row level security;
+create policy "Users read own role" on user_roles for select using (auth.uid() = user_id);
+-- Insert your own user ID manually as 'owner' to bootstrap
+
+-- 3. USER ACTIVITY (Personal Watch Status)
+create table if not exists user_activity (
+  user_id uuid references auth.users,
+  catalog_id uuid references catalog_items(id),
+  watched boolean default false,
+  rating int check (rating between 1 and 10),
+  primary key (user_id, catalog_id)
+);
+alter table user_activity enable row level security;
+create policy "Users manage own activity" on user_activity for all using (auth.uid() = user_id);
+
+-- 4. MDL Registry (Legacy but useful)
+create table if not exists mdl_registry (
+  mdl_id text primary key,
+  title text,
+  rating float,
+  votes int,
+  poster_url text,
+  raw jsonb
+);
+alter table mdl_registry enable row level security;
+create policy "Public read registry" on mdl_registry for select using (true);
+`;
+
+        // --- GLOBAL CACHE SYSTEM (30-DAY TTL) ---
+        const CACHE_TTL_30_DAYS = 30 * 24 * 60 * 60 * 1000;
         
-        const SMART_LISTS = [
-            { id: 'top_rated', label: 'Top Rated', icon: Star, filter: item => item.userMeta?.ratings?.overall >= 9 },
-            { id: 'rewatch', label: 'Rewatch Worthy', icon: Repeat, filter: item => item.userMeta?.rewatchCount > 0 },
-            { id: 'foreign', label: 'Foreign', icon: Globe, filter: item => item.Language && !item.Language.includes('English') },
-            { id: 'progress', label: 'In Progress', icon: Play, filter: item => item.userMeta?.series?.lastEpisode?.season > 0 },
-        ];
-
-        // --- HELPERS (Outside App) ---
-        const normalize = (q) => q.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
-        const SEARCH_TTL = 7 * 24 * 60 * 60 * 1000;
-
-        const getSearchCache = (key) => {
-          try {
-            const raw = localStorage.getItem(key);
-            if (!raw) return null;
-            const { data, ts } = JSON.parse(raw);
-            if (Date.now() - ts > SEARCH_TTL) return null;
-            return data;
-          } catch (e) { return null; }
-        };
-
-        const setSearchCache = (key, data) => {
-          try {
-            localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-          } catch (e) { console.warn("Cache quota exceeded"); }
-        };
-
-        // 3️⃣ Ratings & MAL Helpers
-        const normalizeRatings = (item) => {
-            const ratings = {
-                imdb: { rating: item.imdbRating, votes: item.imdbVotes },
-                rotten: null,
-                metacritic: null
-            };
-            item.Ratings?.forEach(r => {
-                if (r.Source === "Rotten Tomatoes") ratings.rotten = r.Value;
-                if (r.Source === "Metacritic") ratings.metacritic = r.Value;
-            });
-            return ratings;
-        };
-
-        const fetchMAL = async (title) => {
+        const cacheGet = (key) => {
             try {
-                const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`);
-                const json = await res.json();
-                return json.data?.[0];
-            } catch (e) { console.error("MAL Fetch Error", e); return null; }
-        };
-
-        // Cloud Throttle Queue
-        const cloudQueue = {
-            current: new Map(),
-            timer: null
-        };
-        const saveToCloudThrottled = (id, item, session) => {
-            if (!session) return;
-            cloudQueue.current.set(id, item);
-            
-            if (cloudQueue.timer) clearTimeout(cloudQueue.timer);
-            
-            cloudQueue.timer = setTimeout(async () => {
-                const batch = [];
-                cloudQueue.current.forEach((val, key) => {
-                    batch.push({
-                        user_id: session.user.id,
-                        imdb_id: key,
-                        user_meta: val,
-                        updated_at: new Date()
-                    });
-                });
-                cloudQueue.current.clear();
-                
-                if (batch.length > 0) {
-                     const { error } = await supabaseClient.from("vault_items").upsert(batch);
-                     if (error) console.error("Batch save failed", error);
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const { data, ts } = JSON.parse(raw);
+                if (Date.now() - ts > CACHE_TTL_30_DAYS) {
+                    localStorage.removeItem(key);
+                    return null;
                 }
-            }, 2000); 
+                return data;
+            } catch (e) { return null; }
         };
 
-        // --- UTILS ---
-        const getHighResPoster = (url, width = 600) => {
-            if (!url || url === "N/A") return "https://via.placeholder.com/300x450?text=No+Poster";
-            if (url.includes("media-amazon.com") || url.includes("images-na.ssl-images-amazon.com")) {
-                return url.replace(/_V1_.*\.jpg$/, `_V1_SX${width}.jpg`);
-            }
-            if (url.includes("tmdb.org")) return url.replace(/\/w\d+\//, width > 700 ? "/original/" : `/w${width}/`);
-            return url;
+        const cacheSet = (key, data) => {
+            try {
+                localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+            } catch (e) { console.warn("Cache quota exceeded"); }
         };
 
-        // 6️⃣ Smart Image Helper (New)
-        const tmdbImg = (path, size = "w780") => path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
+        const normalize = (q) => q.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-        // 1️⃣ Migrate Item & Extend Data Model
-        const migrateItem = (item, status) => {
-            if (item.userMeta && item.meta && item.tmdb && item.meta.ratingsExternal) return item;
-            
-            const isSeries = item.Type === 'series' || item.Genre?.includes('Animation'); // Heuristic
-            const oldRating = parseFloat(item.userRating || item.userMeta?.userRating || 0);
+        // --- API HELPERS (Used for creating Catalog Items) ---
+        const fetchOmdbCached = async (url) => {
+            const key = `omdb:${url}`;
+            const cached = cacheGet(key);
+            if (cached) return cached;
+            try {
+                const res = await fetch(url);
+                const json = await res.json();
+                cacheSet(key, json);
+                return json;
+            } catch(e) { console.error("OMDb Error", e); return null; }
+        };
 
-            return {
-              ...item,
-              
-              // 🔥 Normalized metadata
-              meta: item.meta || {
-                  director: item.Director || "",
-                  genre: item.Genre?.split(",").map(g => g.trim()) || [],
-                  cast: item.Actors
-                    ? item.Actors.split(",").map(a => ({
-                        name: a.trim(),
-                        character: null 
-                      }))
-                    : [],
-                  series: isSeries ? { seasons: [] } : null,
-                  // 3️⃣ New Meta Fields
-                  ratingsExternal: normalizeRatings(item),
-                  anime: null,
-                  asian: null
-              },
-
-              // 🌟 TMDB Namespace (New)
-              tmdb: item.tmdb || {
-                  id: null,
-                  credits: null,
-                  images: null,
-                  seasons: null,
-                  enriched: false
-              },
-
-              userMeta: {
-                status: status || item.userMeta?.status || 'watchlist',
-                userRating: oldRating, 
-                rewatchCount: item.userMeta?.rewatchCount || 0,
-                series: isSeries ? (item.userMeta?.series || {
-                  lastEpisode: { season: 0, episode: 0 },
-                  completed: false
-                }) : null,
-                ratings: item.userMeta?.ratings || { overall: oldRating, story: 0, direction: 0, emotion: 0 },
-                lastUpdated: item.userMeta?.lastUpdated || Date.now(),
-                watchedOn: item.userMeta?.watchedOn || new Date().toISOString().split('T')[0],
-                autoOverall: true,
-                notes: item.userMeta?.notes || ""
-              }
-            };
+        const fetchTmdbCached = async (endpoint, apiKey) => {
+            if (!apiKey) return null;
+            const key = `tmdb:${endpoint}`;
+            const cached = cacheGet(key);
+            if (cached) return cached;
+            try {
+                const sep = endpoint.includes('?') ? '&' : '?';
+                const res = await fetch(`https://api.themoviedb.org/3/${endpoint}${sep}api_key=${apiKey}`);
+                if (!res.ok) return null;
+                const json = await res.json();
+                cacheSet(key, json);
+                return json;
+            } catch(e) { console.error("TMDB Error", e); return null; }
         };
 
         // --- AUTH COMPONENT ---
@@ -294,857 +236,289 @@
             const handleSubmit = async (e) => {
               e.preventDefault();
               setError("");
-
               try {
                 if (isRegister) {
-                  const { error } = await supabaseClient.auth.signUp({
-                    email,
-                    password
-                  });
+                  const { error } = await supabaseClient.auth.signUp({ email, password });
                   if (error) throw error;
                   alert("Registered! Now login.");
                   setIsRegister(false);
                 } else {
-                  const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email,
-                    password
-                  });
+                  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                   if (error) throw error;
                   onLogin(data.session);
                   onClose();
                 }
-              } catch (err) {
-                setError(err.message);
-              }
+              } catch (err) { setError(err.message); }
             };
-
 
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
                     <div className="bg-white dark:bg-dark-card w-full max-w-sm rounded-2xl shadow-2xl border border-light-border dark:border-dark-border p-8 relative">
                          <div className="text-center mb-8">
-                             <div className="inline-block p-3 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 mb-4">
-                                <VaultLogoIcon size={48} />
-                             </div>
+                             <div className="inline-block p-3 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 mb-4"><VaultLogoIcon size={48} /></div>
                              <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-wider">{isRegister ? 'Join The Vault' : 'Welcome Back'}</h2>
-                             <p className="text-sm text-gray-500 mt-2">Sync your collection across devices</p>
                          </div>
-                         
                          {error && <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-lg">{error}</div>}
-
                          <form onSubmit={handleSubmit} className="space-y-4">
-                             <div>
-                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Email</label>
-                                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 dark:text-white" required />
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Password</label>
-                                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 dark:text-white" required />
-                             </div>
-                             <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-indigo-600/20">
-                                 {isRegister ? 'Create Account' : 'Access Vault'}
-                             </button>
+                             <div><label className="block text-xs font-bold uppercase text-gray-500 mb-1">Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 dark:text-white" required /></div>
+                             <div><label className="block text-xs font-bold uppercase text-gray-500 mb-1">Password</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 dark:text-white" required /></div>
+                             <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-indigo-600/20">{isRegister ? 'Create Account' : 'Enter Catalog'}</button>
                          </form>
-
-                         <div className="mt-6 text-center">
-                             <button onClick={() => setIsRegister(!isRegister)} className="text-sm text-gray-500 hover:text-indigo-600 dark:hover:text-white transition-colors">
-                                 {isRegister ? 'Already have an account? Login' : 'Need an account? Register'}
-                             </button>
-                         </div>
+                         <div className="mt-6 text-center"><button onClick={() => setIsRegister(!isRegister)} className="text-sm text-gray-500 hover:text-indigo-600 dark:hover:text-white transition-colors">{isRegister ? 'Already have an account? Login' : 'Need an account? Register'}</button></div>
                     </div>
                 </div>
             );
         }
 
         // --- SETTINGS MODAL ---
-        const SettingsModal = ({ isOpen, onClose, apiKeys, setApiKeys, theme, setTheme, onReset, onImport, onExport }) => {
+        const SettingsModal = ({ isOpen, onClose, apiKeys, setApiKeys, theme, setTheme }) => {
+            const [activeTab, setActiveTab] = useState('general');
+            const [copySuccess, setCopySuccess] = useState('');
+
             if (!isOpen) return null;
+
+            const copySQL = () => {
+                navigator.clipboard.writeText(DB_SCHEMA_SQL);
+                setCopySuccess('Copied!');
+                setTimeout(() => setCopySuccess(''), 2000);
+            };
+
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white dark:bg-dark-card w-full max-w-md rounded-2xl shadow-2xl border border-light-border dark:border-dark-border p-6 relative">
+                    <div className="bg-white dark:bg-dark-card w-full max-w-lg rounded-2xl shadow-2xl border border-light-border dark:border-dark-border p-6 relative flex flex-col max-h-[90vh]">
                         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
-                        <h2 className="text-xl font-bold mb-6 dark:text-white flex items-center gap-2"><Settings size={20} /> Vault Settings</h2>
+                        <h2 className="text-xl font-bold mb-6 dark:text-white flex items-center gap-2"><Settings size={20} /> App Settings</h2>
                         
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Appearance</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button onClick={() => setTheme('light')} className={`py-2 rounded-lg text-sm font-medium border ${theme === 'light' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-200 dark:border-gray-700 dark:text-gray-400'}`}>Light Mode</button>
-                                    <button onClick={() => setTheme('dark')} className={`py-2 rounded-lg text-sm font-medium border ${theme === 'dark' ? 'bg-indigo-900/30 border-indigo-500 text-indigo-300' : 'border-gray-200 dark:border-gray-700 dark:text-gray-400'}`}>Dark Mode</button>
-                                </div>
-                            </div>
+                        <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
+                            <button onClick={() => setActiveTab('general')} className={`pb-2 text-sm font-medium transition-colors ${activeTab === 'general' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>General</button>
+                            <button onClick={() => setActiveTab('database')} className={`pb-2 text-sm font-medium transition-colors ${activeTab === 'database' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Database</button>
+                        </div>
 
-                            <div>
-                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">API Connections</label>
-                                <div className="space-y-3">
-                                    <input type="text" placeholder="OMDb API Key" value={apiKeys.omdb} onChange={(e) => setApiKeys(p => ({...p, omdb: e.target.value}))} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:text-white" />
-                                    <input type="text" placeholder="TMDB API Key" value={apiKeys.tmdb} onChange={(e) => setApiKeys(p => ({...p, tmdb: e.target.value}))} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:text-white" />
-                                    <input type="text" placeholder="RapidAPI Key (Optional)" value={apiKeys.rapid || ''} onChange={(e) => setApiKeys(p => ({...p, rapid: e.target.value}))} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:text-white" />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Keys are stored locally in your browser.</p>
-                            </div>
+                        <div className="overflow-y-auto custom-scrollbar flex-1">
+                            {activeTab === 'general' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Appearance</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button onClick={() => setTheme('light')} className={`py-2 rounded-lg text-sm font-medium border ${theme === 'light' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-200 dark:border-gray-700 dark:text-gray-400'}`}>Light Mode</button>
+                                            <button onClick={() => setTheme('dark')} className={`py-2 rounded-lg text-sm font-medium border ${theme === 'dark' ? 'bg-indigo-900/30 border-indigo-500 text-indigo-300' : 'border-gray-200 dark:border-gray-700 dark:text-gray-400'}`}>Dark Mode</button>
+                                        </div>
+                                    </div>
 
-                            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={onExport} className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700"><Download size={14}/> Backup</button>
-                                    <label className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
-                                        <Upload size={14}/> Restore
-                                        <input type="file" accept=".json" onChange={onImport} className="hidden" />
-                                    </label>
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">API Connections</label>
+                                        <div className="space-y-3">
+                                            <input type="text" placeholder="OMDb API Key" value={apiKeys.omdb} onChange={(e) => setApiKeys(p => ({...p, omdb: e.target.value}))} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:text-white" />
+                                            <input type="text" placeholder="TMDB API Key" value={apiKeys.tmdb} onChange={(e) => setApiKeys(p => ({...p, tmdb: e.target.value}))} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:text-white" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <button onClick={onReset} className="w-full text-red-500 hover:text-red-600 text-xs font-bold py-2">Factory Reset Vault</button>
-                            </div>
+                            )}
+
+                            {activeTab === 'database' && (
+                                <div className="space-y-4">
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                        <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-2"><Database size={16}/> Setup Required</h3>
+                                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">Run this SQL in Supabase to enable the Catalog, RBAC, and Activity tracking.</p>
+                                    </div>
+                                    <div className="relative">
+                                        <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-[10px] font-mono text-gray-600 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap border border-gray-200 dark:border-gray-700">
+                                            {DB_SCHEMA_SQL}
+                                        </pre>
+                                        <button onClick={copySQL} className="absolute top-2 right-2 p-2 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                            {copySuccess ? <span className="text-xs font-bold text-green-500">{copySuccess}</span> : <Copy size={14} className="text-gray-500"/>}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- MAIN APP ---
+        // --- MAIN APP (NEW STATE MODEL) ---
         function App() {
-            // -- State --
+            // 🔐 Auth
             const [session, setSession] = useState(null);
+            const [role, setRole] = useState("viewer"); // 'owner' | 'viewer'
 
-            const [vault, setVault] = useState({ watched: {}, watchlist: {} });
+            // 📚 Shared catalog (cloud inventory)
+            const [catalog, setCatalog] = useState([]);
+            
+            // 👤 Optional personal activity
+            const [activity, setActivity] = useState({}); // keyed by catalog_id
+
+            // 🔍 Discovery UI
+            const [searchQuery, setSearchQuery] = useState("");
+            const [filters, setFilters] = useState({
+                type: "all",
+                quality: [],
+                language: [],
+                available: true
+            });
+            const [searchResults, setSearchResults] = useState([]); // For Adding items only
+
+            // 🎬 Selection
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [addItemModal, setAddItemModal] = useState(null); // For owners to configure adding
+
+            // ⚙️ UI
+            const [showSettings, setShowSettings] = useState(false);
+            const [showAuth, setShowAuth] = useState(false);
+            const [loading, setLoading] = useState(false);
             const [apiKeys, setApiKeys] = useState(DEFAULT_KEYS);
             const [theme, setTheme] = useState('dark');
-            const [viewMode, setViewMode] = useState('grid'); // 'grid', 'timeline', 'analytics'
             
-            const [showAuth, setShowAuth] = useState(false);
-            const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, error
-            
-            // -- UI State --
-            const [searchQuery, setSearchQuery] = useState('');
-            const [searchResults, setSearchResults] = useState([]);
-            const [activeFilter, setActiveFilter] = useState('all');
-            const [activeSmartList, setActiveSmartList] = useState(null);
-            const [sortBy, setSortBy] = useState('updated');
-            const [selectedMovie, setSelectedMovie] = useState(null);
-            const [actorModalData, setActorModalData] = useState(null); // 3️⃣ Actor Modal State
-            const [showSettings, setShowSettings] = useState(false);
-            const [isSelectMode, setIsSelectMode] = useState(false);
-            const [selectedIds, setSelectedIds] = useState([]);
-            
-            // Search Debounce Ref
             const searchTimeout = useRef(null);
 
-            // 2️⃣ TMDB Enrichment Helpers
-            const fetchTmdbId = async (imdbID, type) => {
-              if (!apiKeys.tmdb) return null;
-              try {
-                  const res = await fetch(`https://api.themoviedb.org/3/find/${imdbID}?api_key=${apiKeys.tmdb}&external_source=imdb_id`);
-                  const json = await res.json();
-                  return type === "movie" ? json.movie_results?.[0]?.id : json.tv_results?.[0]?.id;
-              } catch(e) { console.error("TMDB Find Error", e); return null; }
+            // --- 5️⃣ LOAD DATA ---
+            useEffect(() => {
+                // A. Load Catalog (Everyone)
+                supabaseClient
+                    .from("catalog_items")
+                    .select("*")
+                    .order('added_at', { ascending: false })
+                    .then(({ data, error }) => {
+                        if (error) console.error("Catalog fetch error", error);
+                        else setCatalog(data || []);
+                    });
+            }, []);
+
+            useEffect(() => {
+                if (!session) {
+                    setRole("viewer");
+                    setActivity({});
+                    return;
+                }
+
+                // B. Load User Role
+                supabaseClient
+                    .from("user_roles")
+                    .select("role")
+                    .eq("user_id", session.user.id)
+                    .single()
+                    .then(({ data }) => setRole(data?.role || "viewer"));
+
+                // C. Load Personal Activity
+                supabaseClient
+                    .from("user_activity")
+                    .select("*")
+                    .eq("user_id", session.user.id)
+                    .then(({ data }) => {
+                        const map = {};
+                        data?.forEach(d => map[d.catalog_id] = d);
+                        setActivity(map);
+                    });
+            }, [session]);
+
+            // --- 6️⃣ FILTERING & SEARCH ---
+            const visibleCatalog = useMemo(() => {
+                return catalog
+                    .filter(i => i.available)
+                    .filter(i => !searchQuery || i.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .filter(i => filters.type === "all" ? true : i.type === filters.type)
+                    .filter(i => filters.quality.length === 0 || filters.quality.some(q => i.quality.includes(q)))
+                    .filter(i => filters.language.length === 0 || filters.language.some(l => i.languages.includes(l)));
+            }, [catalog, searchQuery, filters]);
+
+            // --- 7️⃣ OWNER ACTIONS ---
+            const searchForAdd = async (q) => {
+                if (!apiKeys.omdb || q.length < 3) return;
+                const json = await fetchOmdbCached(`https://www.omdbapi.com/?apikey=${apiKeys.omdb}&s=${encodeURIComponent(q)}`);
+                if (json.Search) setSearchResults(json.Search);
             };
 
-            const extractDirectors = (crew, type) => {
-              if (!crew) return [];
-              if (type === "movie") return crew.filter(c => c.job === "Director").map(d => d.name);
-              return crew.filter(c => c.department === "Directing" || c.job === "Executive Producer").slice(0,2).map(d => d.name); 
+            const handleSearchInput = (val) => {
+                setSearchQuery(val);
+                if (role === 'owner') {
+                    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                    searchTimeout.current = setTimeout(() => searchForAdd(val), 500);
+                }
             };
 
-            const fetchCredits = async (tmdbId, type) => {
-              const endpoint = type === "movie" ? "movie" : "tv";
-              const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbId}/credits?api_key=${apiKeys.tmdb}`);
-              return await res.json();
-            };
-
-            const normalizeCast = (cast) =>
-              cast.slice(0, 12).map(actor => ({
-                id: actor.id,
-                name: actor.name,
-                character: actor.character,
-                photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : null
-              }));
-
-            const fetchTvDetails = async (tmdbId) => {
-              const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${apiKeys.tmdb}`);
-              return await res.json();
-            };
-
-            const fetchSeasonEpisodes = async (tmdbId, seasonNumber) => {
-              const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNumber}?api_key=${apiKeys.tmdb}`);
-              const json = await res.json();
-              return json.episodes.map(ep => ({
-                episode: ep.episode_number,
-                title: ep.name,
-                airDate: ep.air_date,
-                overview: ep.overview,
-                still: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
-                imdbRating: ep.vote_average ? ep.vote_average.toFixed(1) : null,
-                // Tracking Defaults
-                rating: null,
-                watched: false,
-                watchedOn: null,
-                notes: ""
-              }));
-            };
-
-            // 3️⃣ Actor Logic
-            const fetchFilmography = async (actorId) => {
-                try {
-                    const res = await fetch(`https://api.themoviedb.org/3/person/${actorId}/combined_credits?api_key=${apiKeys.tmdb}`);
-                    const json = await res.json();
-                    return json.cast
-                        .filter(c => c.poster_path && (c.media_type === 'movie' || c.media_type === 'tv'))
-                        .sort((a, b) => b.popularity - a.popularity)
-                        .slice(0, 20); // Top 20
-                } catch(e) { console.error("Filmography error", e); return []; }
-            };
-
-            const onActorClick = async (actor) => {
-                const credits = await fetchFilmography(actor.id);
-                setActorModalData({ name: actor.name, credits, id: actor.id, photo: actor.photo });
-            };
-
-            const searchByPerson = async (query) => {
-              if(!apiKeys.tmdb) return [];
-              try {
-                  const res = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKeys.tmdb}&query=${encodeURIComponent(query)}`);
-                  const json = await res.json();
-                  return json.results.slice(0, 3).map(p => ({
-                      ...p,
-                      media_type: 'person',
-                      Title: p.name,
-                      imdbID: `person_${p.id}` // Fake ID for list key
-                  }));
-              } catch(e) { return []; }
-            };
-
-            // 6️⃣ Unified Enrichment Function
-            const enrichItem = async (item) => {
-                // Check if we need enrichment
-                const needsTmdb = !item.tmdb?.enriched && apiKeys.tmdb;
-                const needsAnime = item.Genre?.includes('Animation') && item.Country?.includes('Japan') && !item.meta.anime;
+            const openAddModal = async (imdbID) => {
+                if (role !== 'owner') return;
+                setLoading(true);
+                // Fetch deep metadata to populate the catalog item
+                const omdb = await fetchOmdbCached(`https://www.omdbapi.com/?apikey=${apiKeys.omdb}&i=${imdbID}&plot=full`);
+                let tmdbData = null;
                 
-                if (!needsTmdb && !needsAnime) return;
-
-                let updates = {};
-
-                // Anime Fetch
-                if (needsAnime) {
-                    const malData = await fetchMAL(item.Title);
-                    if (malData) {
-                        updates.meta = { ...item.meta, anime: { malRating: malData.score, malVotes: malData.scored_by, malId: malData.mal_id, url: malData.url } };
-                    }
+                // Try TMDB for higher quality
+                if (apiKeys.tmdb) {
+                     const find = await fetchTmdbCached(`find/${imdbID}?external_source=imdb_id`, apiKeys.tmdb);
+                     const tmdbId = find?.movie_results?.[0]?.id || find?.tv_results?.[0]?.id;
+                     if (tmdbId) {
+                         tmdbData = await fetchTmdbCached(`${omdb.Type === 'series' ? 'tv' : 'movie'}/${tmdbId}`, apiKeys.tmdb);
+                     }
                 }
 
-                // TMDB Fetch
-                if (needsTmdb) {
-                    try {
-                        const tmdbId = item.tmdb?.id || await fetchTmdbId(item.imdbID, item.Type === 'series' ? 'tv' : 'movie');
-                        if (tmdbId) {
-                            const credits = await fetchCredits(tmdbId, item.Type === 'series' ? 'tv' : 'movie');
-                            const directors = extractDirectors(credits.crew, item.Type);
-                            const cast = normalizeCast(credits.cast);
-
-                            let seasons = null;
-                            if (item.Type === "series") {
-                                const tv = await fetchTvDetails(tmdbId);
-                                seasons = await Promise.all(
-                                    tv.seasons
-                                        .filter(s => s.season_number > 0)
-                                        .map(async s => ({
-                                            season: s.season_number,
-                                            airDate: s.air_date,
-                                            episodes: await fetchSeasonEpisodes(tmdbId, s.season_number)
-                                        }))
-                                );
-                            }
-                            
-                            updates.meta = {
-                                ...(updates.meta || item.meta),
-                                director: directors.length > 0 ? directors : item.meta.director,
-                                cast: cast,
-                                series: seasons ? { seasons } : item.meta.series
-                            };
-                            updates.tmdb = {
-                                id: tmdbId,
-                                credits: { cast: cast, crew: credits.crew.slice(0,5) },
-                                seasons,
-                                enriched: true
-                            };
+                const draftItem = {
+                    imdb_id: imdbID,
+                    title: omdb.Title,
+                    type: omdb.Type === 'series' ? 'series' : 'movie',
+                    available: true,
+                    source: 'gdrive',
+                    quality: ['1080p'],
+                    languages: ['English'],
+                    meta: {
+                        poster: tmdbData ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : omdb.Poster,
+                        year: parseInt(omdb.Year),
+                        runtime: omdb.Runtime,
+                        genres: omdb.Genre.split(', '),
+                        director: omdb.Director,
+                        plot: omdb.Plot,
+                        ratings: {
+                            imdb: omdb.imdbRating
                         }
-                    } catch(e) { console.error("TMDB Enrichment Failed", e); }
-                }
+                    }
+                };
+                setAddItemModal(draftItem);
+                setSearchResults([]); // Clear search results
+                setLoading(false);
+            };
 
-                if (Object.keys(updates).length > 0) {
-                    updateItem(item.imdbID, i => ({ ...i, ...updates }));
+            const saveCatalogItem = async () => {
+                if (role !== 'owner' || !addItemModal) return;
+                
+                const { data, error } = await supabaseClient
+                    .from("catalog_items")
+                    .insert(addItemModal)
+                    .select()
+                    .single();
+
+                if (error) {
+                    alert("Error adding item: " + error.message);
+                } else {
+                    setCatalog(prev => [data, ...prev]);
+                    setAddItemModal(null);
+                    setSearchQuery("");
                 }
             };
 
-            // -- Initialization --
+            // --- EFFECTS & HELPERS ---
             useEffect(() => {
                 if (theme === 'dark') document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
+            }, [theme]);
+            
+            useEffect(() => {
                 const localKeys = localStorage.getItem('vault_v5_keys');
                 if (localKeys) setApiKeys(JSON.parse(localKeys));
                 
-                // Load local data and backfill metadata if missing
-                const localVault = localStorage.getItem('vault_v6_data');
-                if (localVault) {
-                    try {
-                        const parsed = JSON.parse(localVault);
-                        let changed = false;
-                        
-                        // Self-healing migration for existing data
-                        ['watched', 'watchlist'].forEach(listKey => {
-                            if (parsed[listKey]) {
-                                Object.keys(parsed[listKey]).forEach(key => {
-                                    const item = parsed[listKey][key];
-                                    if (!item.tmdb || !item.meta.ratingsExternal) {
-                                        // Run migration on item
-                                        parsed[listKey][key] = migrateItem(item);
-                                        changed = true;
-                                    }
-                                });
-                            }
-                        });
-
-                        setVault(parsed);
-                        if (changed) {
-                            localStorage.setItem('vault_v6_data', JSON.stringify(parsed));
-                        }
-                    } catch (e) {
-                        console.error("Corrupted local vault", e);
-                    }
-                }
-            }, []);
-
-            // -- Session Restore Effect --
-            useEffect(() => {
-                supabaseClient.auth.getSession().then(({ data }) => {
-                    setSession(data.session);
-                });
-
-                const { data: listener } = supabaseClient.auth.onAuthStateChange(
-                    (_event, session) => {
-                        setSession(session);
-                    }
-                );
-
+                // Auth Listener
+                supabaseClient.auth.getSession().then(({ data }) => setSession(data.session));
+                const { data: listener } = supabaseClient.auth.onAuthStateChange((_event, session) => setSession(session));
                 return () => listener.subscription.unsubscribe();
             }, []);
 
             useEffect(() => { localStorage.setItem('vault_v5_keys', JSON.stringify(apiKeys)); }, [apiKeys]);
-            useEffect(() => { if (theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }, [theme]);
-
-            // -- AUTH & SYNC --
-            const handleLogin = (session) => {
-              setSession(session);
-            };
-
-
-           const handleLogout = async () => {
-              await supabaseClient.auth.signOut();
-              setSession(null);
-            };
-
-            // -- BACKUP & RESTORE --
-            const handleExport = () => {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vault));
-                const downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "vault_backup_" + new Date().toISOString().split('T')[0] + ".json");
-                document.body.appendChild(downloadAnchorNode);
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
-            };
-
-            const handleImport = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const rawData = JSON.parse(event.target.result);
-                        if (!rawData.watched && !rawData.watchlist) throw new Error("Invalid format: Not a Vault backup file");
-                        
-                        // MIGRATION LOGIC
-                        const processedVault = { watched: {}, watchlist: {} };
-                        
-                        Object.entries(rawData.watched || {}).forEach(([id, item]) => {
-                            processedVault.watched[id] = migrateItem(item, 'watched');
-                        });
-                        
-                        Object.entries(rawData.watchlist || {}).forEach(([id, item]) => {
-                            processedVault.watchlist[id] = migrateItem(item, 'watchlist');
-                        });
-
-                        // 1. Update Local State & Storage (Immediate UI Update)
-                        setVault(processedVault);
-                        localStorage.setItem('vault_v6_data', JSON.stringify(processedVault));
-                        
-                        // 2. Cloud Sync (if logged in) - REPLACES existing data
-                        if (session) {
-                            setSyncStatus('syncing');
-                            
-                            // Delete all existing items for this user (Replace logic)
-                            await supabaseClient.from('vault_items').delete().eq('user_id', session.user.id);
-
-                            // Transform to flat array for upload
-                            const items = [];
-                            [...Object.values(processedVault.watched), ...Object.values(processedVault.watchlist)].forEach(item => {
-                                items.push({
-                                    user_id: session.user.id,
-                                    imdb_id: item.imdbID,
-                                    user_meta: item,
-                                    updated_at: new Date()
-                                });
-                            });
-
-                            // Upload in chunks to avoid payload limits
-                            const chunkSize = 50;
-                            for (let i = 0; i < items.length; i += chunkSize) {
-                                const chunk = items.slice(i, i + chunkSize);
-                                const { error } = await supabaseClient.from('vault_items').upsert(chunk);
-                                if (error) console.error("Chunk upload error:", error);
-                            }
-                            
-                            setSyncStatus('idle');
-                        }
-                        
-                        setShowSettings(false);
-                        alert("Vault restored successfully!");
-                    } catch (err) {
-                        console.error(err);
-                        alert("Failed to import file: " + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-
-            // Cloud Fetch Effect (The user requested snippet logic)
-           useEffect(() => {
-              if (!session) return;
-
-              setSyncStatus("syncing");
-
-              supabaseClient
-                .from("vault_items")
-                .select("*")
-                .then(({ data, error }) => {
-                  if (error) {
-                    setSyncStatus("error");
-                    return console.error(error);
-                  }
-                  
-                  setSyncStatus("idle");
-                  const newVault = { watched: {}, watchlist: {} };
-
-                  data.forEach(row => {
-                    let item = row.user_meta;
-                    // Check for valid status from cloud, else guess
-                    const defaultStatus = (item.userRating && parseFloat(item.userRating) > 0) ? 'watched' : 'watchlist';
-                    const status = item.userMeta?.status || defaultStatus;
-                    item = migrateItem(item, status); 
-                    
-                    if (item.userMeta?.status === "watched")
-                      newVault.watched[row.imdb_id] = item;
-                    else
-                      newVault.watchlist[row.imdb_id] = item;
-                  });
-
-                  setVault(newVault);
-                  localStorage.setItem("vault_v6_data", JSON.stringify(newVault));
-                })
-                .catch(err => {
-                    setSyncStatus("error");
-                    console.error(err);
-                });
-            }, [session]);
-
-
-            const updateItem = useCallback((imdbID, updater) => {
-                setVault(prev => {
-                    const item = prev.watched[imdbID] || prev.watchlist[imdbID];
-                    if (!item) return prev;
-
-                    const updatedItem = updater(item);
-                    if (!updatedItem.userMeta.lastUpdated) updatedItem.userMeta.lastUpdated = Date.now();
-                    
-                    const newStatus = updatedItem.userMeta.status;
-                    const nextWatched = { ...prev.watched };
-                    const nextWatchlist = { ...prev.watchlist };
-
-                    delete nextWatched[imdbID];
-                    delete nextWatchlist[imdbID];
-
-                    if (newStatus === 'watched') nextWatched[imdbID] = updatedItem;
-                    else nextWatchlist[imdbID] = updatedItem;
-
-                    const nextVault = { watched: nextWatched, watchlist: nextWatchlist };
-                    
-                    // Critical Fix 3: Persist to localStorage
-                    localStorage.setItem("vault_v6_data", JSON.stringify(nextVault));
-
-                    // Trigger Cloud Save (Throttled)
-                    saveToCloudThrottled(imdbID, updatedItem, session);
-
-                    return nextVault;
-                });
-            }, [session]);
-
-            // Sync selectedMovie stale data and trigger enrichment for series
-            useEffect(() => {
-                if (!selectedMovie) return;
-                
-                const updated = vault.watched[selectedMovie.imdbID] || vault.watchlist[selectedMovie.imdbID];
-                
-                // If the selected movie updates in the background, update the modal
-                if (updated && updated !== selectedMovie) {
-                    setSelectedMovie(updated);
-                }
-
-                // 🔥 Trigger Enrichment
-                if (updated) {
-                    enrichItem(updated);
-                }
-            }, [vault, selectedMovie]);
-
-            // 1️⃣ Episode Logic
-            const toggleEpisode = (imdbID, seasonNum, epNum) => {
-              updateItem(imdbID, item => {
-                const seasons = item.meta.series.seasons.map(s =>
-                  s.season !== seasonNum
-                    ? s
-                    : {
-                        ...s,
-                        episodes: s.episodes.map(e =>
-                          e.episode !== epNum
-                            ? e
-                            : {
-                                ...e,
-                                watched: !e.watched,
-                                watchedOn: !e.watched
-                                  ? new Date().toISOString()
-                                  : null
-                              }
-                        )
-                      }
-                );
-
-                return {
-                  ...item,
-                  meta: { ...item.meta, series: { seasons } }
-                };
-              });
-            };
-
-            const rateEpisode = (imdbID, seasonNum, epNum, rating) => {
-              updateItem(imdbID, item => ({
-                ...item,
-                meta: {
-                  ...item.meta,
-                  series: {
-                    seasons: item.meta.series.seasons.map(s =>
-                      s.season !== seasonNum
-                        ? s
-                        : {
-                            ...s,
-                            episodes: s.episodes.map(e =>
-                              e.episode === epNum ? { ...e, rating } : e
-                            )
-                          }
-                    )
-                  }
-                }
-              }));
-            };
-
-
-            // --- SEARCH LOGIC ---
-
-            // Check if item exists in vault
-            const existsInVault = useCallback((imdbID) => {
-                return !!(vault.watched[imdbID] || vault.watchlist[imdbID]);
-            }, [vault]);
-
-            // Offline search (Improved Ranking)
-            const searchOfflineVault = useCallback((query) => {
-              const norm = normalize(query);
-              if (!norm) return [];
-              const all = [
-                ...Object.values(vault.watched),
-                ...Object.values(vault.watchlist)
-              ];
-              const matches = all.filter(item =>
-                normalize(item.Title).includes(norm) ||
-                item.imdbID === query
-              );
-              
-              // Sort by recently updated
-              return matches.sort((a, b) => (b.userMeta?.lastUpdated || 0) - (a.userMeta?.lastUpdated || 0));
-
-            }, [vault]);
-
-            const smartSearch = useCallback(async (query, type = "", year = "") => {
-              // 1. Offline
-              const offline = searchOfflineVault(query);
-              if (offline.length > 0) return { source: "offline", results: offline };
-
-              const cacheKey = `vault_search_${type}_${query}_${year}`;
-              
-              // 2. Cache
-              const cached = getSearchCache(cacheKey);
-              if (cached) return { source: "cache", results: cached };
-
-              // 3. Remote
-              try {
-                  const res = await fetch(
-                    `https://www.omdbapi.com/?apikey=${apiKeys.omdb}&s=${encodeURIComponent(query)}&type=${type}&y=${year}`
-                  );
-                  const json = await res.json();
-                  let results = [];
-                  
-                  if (json.Response === "True") {
-                      results = json.Search;
-                  }
-
-                  // 4️⃣ Search by Actor (Mix-in)
-                  const people = await searchByPerson(query);
-                  results = [...results, ...people];
-
-                  // 5. Rank
-                  const ranked = results.sort((a, b) => {
-                    const exactA = normalize(a.Title) === normalize(query);
-                    const exactB = normalize(b.Title) === normalize(query);
-                    if (exactA !== exactB) return exactB - exactA;
-                    return (parseInt(b.Year) || 0) - (parseInt(a.Year) || 0);
-                  });
-
-                  setSearchCache(cacheKey, ranked);
-                  return { source: "remote", results: ranked };
-              } catch (e) {
-                  console.error(e);
-                  return { source: "error", results: [] };
-              }
-            }, [apiKeys, searchOfflineVault]);
-
-            const fetchMovieById = async (imdbID) => {
-               try {
-                   const res = await fetch(
-                    `https://www.omdbapi.com/?apikey=${apiKeys.omdb}&i=${imdbID}&plot=full`
-                   );
-                   return await res.json();
-               } catch(e) {
-                   console.error("Fetch ID error:", e);
-                   return null;
-               }
-            };
-
-            const addToVault = async (imdbID, status = "watchlist") => {
-              const fullItem = await fetchMovieById(imdbID);
-
-              if (!fullItem || fullItem.Response === "False") return;
-
-              const migrated = migrateItem(fullItem, status);
-
-              setVault(prev => {
-                const next = {
-                  watched: { ...prev.watched },
-                  watchlist: { ...prev.watchlist }
-                };
-
-                delete next.watched[imdbID];
-                delete next.watchlist[imdbID];
-
-                if (status === "watched") {
-                  next.watched[imdbID] = migrated;
-                } else {
-                  next.watchlist[imdbID] = migrated;
-                }
-                
-                // Persist locally
-                localStorage.setItem("vault_v6_data", JSON.stringify(next));
-
-                return next;
-              });
-
-              // 🔁 Cloud sync (Throttled)
-              saveToCloudThrottled(imdbID, migrated, session);
-              setSearchResults([]);
-              setSearchQuery('');
-            };
-
-            const handleSearch = async (q) => {
-              if (!q || q.length < 3) {
-                  setSearchResults([]);
-                  return;
-              }
-              const { results } = await smartSearch(q);
-              setSearchResults(results || []);
-            };
-            
-            // Critical Fix 5: Debounced Search Input Handler
-            const handleSearchInput = (value) => {
-                setSearchQuery(value);
-                if (searchTimeout.current) clearTimeout(searchTimeout.current);
-                
-                if (value.length < 3) {
-                    setSearchResults([]);
-                    return;
-                }
-                
-                searchTimeout.current = setTimeout(() => {
-                    handleSearch(value);
-                }, 400); // 400ms delay
-            };
-
-            // Fix Bulk Actions
-            const handleBulkAction = async (action) => {
-               if (action === 'delete') {
-                    if (!confirm(`Delete ${selectedIds.length} items?`)) return;
-                    
-                    const nextVault = { ...vault };
-                    const nextWatched = { ...nextVault.watched };
-                    const nextWatchlist = { ...nextVault.watchlist };
-                    
-                    selectedIds.forEach(id => {
-                        delete nextWatched[id];
-                        delete nextWatchlist[id];
-                    });
-                    
-                    const newVal = { watched: nextWatched, watchlist: nextWatchlist };
-                    setVault(newVal);
-                    localStorage.setItem("vault_v6_data", JSON.stringify(newVal));
-                    
-                    if (session) {
-                        const { error } = await supabaseClient.from('vault_items').delete().in('imdb_id', selectedIds).eq('user_id', session.user.id);
-                        if (error) console.error("Cloud delete error", error);
-                    }
-                    
-                    setIsSelectMode(false);
-                    setSelectedIds([]);
-               }
-            };
-
-            const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-
-            // -- Computed Data (Same as v6) --
-            // B. Unified allItems search space
-            const allItems = useMemo(() => [...Object.values(vault.watched), ...Object.values(vault.watchlist)], [vault]);
-            
-            // 4️⃣ Analytics with Episode Data
-            const analytics = useMemo(() => {
-                const total = allItems.length;
-                if (total === 0) return { avgRating: 0, totalRewatch: 0, watchedCount: 0, watchedEpisodes: 0, avgEpisodeRating: 0 };
-                
-                const watched = Object.values(vault.watched);
-                const avgRating = watched.reduce((acc, curr) => acc + (curr.userMeta?.ratings?.overall || 0), 0) / (watched.length || 1);
-                const totalRewatch = watched.reduce((acc, curr) => acc + (curr.userMeta?.rewatchCount || 0), 0);
-                
-                // Episode Stats
-                const eps = allItems
-                    .filter(i => i.Type === "series" && i.meta?.series?.seasons)
-                    .flatMap(i => i.meta.series.seasons.flatMap(s => s.episodes || []));
-
-                const watchedEps = eps.filter(e => e.watched);
-                const ratedEps = eps.filter(e => e.rating > 0);
-                const avgEpRating = ratedEps.length > 0 
-                    ? ratedEps.reduce((a, e) => a + (e.rating || 0), 0) / ratedEps.length
-                    : 0;
-
-                return { 
-                    avgRating: avgRating.toFixed(1), 
-                    totalRewatch, 
-                    watchedCount: watched.length,
-                    watchedEpisodes: watchedEps.length,
-                    avgEpisodeRating: avgEpRating.toFixed(1)
-                };
-            }, [allItems, vault]);
-
-            const filteredItems = useMemo(() => {
-                let items = allItems;
-                if (searchQuery) {
-                    const q = searchQuery.toLowerCase();
-                    // C. Library search pipeline (simple but effective) - Only title
-                    items = items.filter(i => i.Title.toLowerCase().includes(q));
-                }
-                if (activeSmartList) {
-                    const list = SMART_LISTS.find(l => l.id === activeSmartList);
-                    if (list) items = items.filter(list.filter);
-                } else {
-                     if (activeFilter === 'movies') items = items.filter(i => i.Type === 'movie');
-                     else if (activeFilter === 'series') items = items.filter(i => i.Type === 'series');
-                }
-                return items.sort((a, b) => {
-                    if (sortBy === 'rating') return (b.userMeta?.ratings?.overall || 0) - (a.userMeta?.ratings?.overall || 0);
-                    if (sortBy === 'updated') return (b.userMeta?.lastUpdated || 0) - (a.userMeta?.lastUpdated || 0);
-                    return a.Title.localeCompare(b.Title); 
-                });
-            }, [allItems, searchQuery, activeFilter, activeSmartList, sortBy]);
-
-            // 1️⃣ Timeline Builder
-            const timelineEvents = useMemo(() => {
-                const events = [];
-                Object.values(vault.watched).forEach(item => {
-                    events.push({
-                        type: "movie",
-                        imdbID: item.imdbID,
-                        title: item.Title,
-                        watchedOn: item.userMeta.watchedOn,
-                        rating: item.userMeta.ratings.overall,
-                        poster: item.Poster
-                    });
-                });
-                allItems.filter(i => i.Type === "series" && i.meta?.series?.seasons).forEach(series => {
-                    series.meta.series.seasons.forEach(s => s.episodes.forEach(e => {
-                        if (e.watched) {
-                            events.push({
-                                type: "episode",
-                                imdbID: series.imdbID,
-                                title: `${series.Title} • S${s.season}E${e.episode}`,
-                                watchedOn: e.watchedOn,
-                                rating: e.rating,
-                                poster: series.Poster
-                            });
-                        }
-                    }));
-                });
-                return events.sort((a, b) => new Date(b.watchedOn) - new Date(a.watchedOn));
-            }, [vault, allItems]);
-
-            // 2️⃣ Analytics Builder
-            const peopleStats = useMemo(() => {
-                const map = {};
-                allItems.forEach(item => {
-                    if (Array.isArray(item.meta?.director)) {
-                        item.meta.director.forEach(name => {
-                            map[name] ??= { movies: 0, avgRating: [], type: "director" };
-                            map[name].movies++;
-                            if(item.userMeta.ratings.overall > 0) map[name].avgRating.push(item.userMeta.ratings.overall);
-                        });
-                    } else if (item.meta?.director && item.meta.director !== "N/A") {
-                         const name = item.meta.director;
-                         map[name] ??= { movies: 0, avgRating: [], type: "director" };
-                         map[name].movies++;
-                         if(item.userMeta.ratings.overall > 0) map[name].avgRating.push(item.userMeta.ratings.overall);
-                    }
-
-                    item.meta?.cast?.forEach(actor => {
-                        map[actor.name] ??= { movies: 0, avgRating: [], type: "actor" };
-                        map[actor.name].movies++;
-                        if(item.userMeta.ratings.overall > 0) map[actor.name].avgRating.push(item.userMeta.ratings.overall);
-                    });
-                });
-                return Object.entries(map).map(([name, d]) => ({
-                    name,
-                    type: d.type,
-                    count: d.movies,
-                    avgRating: d.avgRating.length > 0 ? (d.avgRating.reduce((a, b) => a + b, 0) / d.avgRating.length) : 0
-                })).filter(p => p.count > 1).sort((a, b) => b.count - a.count).slice(0, 8);
-            }, [allItems]);
-
-            // ... (Components: DetailModal, SettingsModal, MovieCard - same as v6, simplified here)
-            // Reusing components from context but ensuring they use the new props
 
             return (
-                <div className="min-h-screen pb-32 selection:bg-indigo-500 selection:text-white">
-                    <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onLogin={handleLogin} />
+                <div className="min-h-screen pb-32 selection:bg-indigo-500 selection:text-white flex flex-col">
+                    <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onLogin={setSession} />
 
+                    {/* HEADER */}
                     <header className="sticky top-0 z-30 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-md border-b border-light-border dark:border-dark-border px-4 h-16 flex items-center justify-between">
                          <div className="flex items-center gap-3">
                              <div className="text-indigo-600 dark:text-indigo-500"><VaultLogoIcon size={38} strokeWidth={1.5} /></div>
@@ -1152,413 +526,251 @@
                                  <span className="text-[10px] font-bold tracking-[0.25em] leading-tight text-gray-500 dark:text-gray-400 uppercase pl-0.5">The</span>
                                  <span className="text-2xl font-black tracking-[0.15em] leading-none uppercase text-gray-900 dark:text-white font-sans">Vault</span>
                              </div>
-                         </div>
-                         
-                         {/* View Switcher */}
-                         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1 mx-4">
-                             <button onClick={() => setViewMode('grid')} className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><Grid size={18}/></button>
-                             <button onClick={() => setViewMode('timeline')} className={`p-2 rounded-full transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><Clock size={18}/></button>
-                             <button onClick={() => setViewMode('analytics')} className={`p-2 rounded-full transition-all ${viewMode === 'analytics' ? 'bg-white dark:bg-dark-card shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}><BarChart size={18}/></button>
+                             {role === 'owner' && <span className="ml-2 bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Owner Mode</span>}
                          </div>
 
-                         <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-3">
                              {!session ? (
-                                 <button onClick={() => setShowAuth(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors">
-                                     <LogIn size={16} /> Login
-                                 </button>
+                                 <button onClick={() => setShowAuth(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors"><LogIn size={16} /> Login</button>
                              ) : (
-                                 <div className="flex items-center gap-2">
-                                     <div className={`w-2 h-2 rounded-full ${syncStatus === 'syncing' ? 'bg-yellow-400 animate-pulse' : syncStatus === 'error' ? 'bg-red-500' : 'bg-green-500'}`} title={`Sync Status: ${syncStatus}`}></div>
-                                     <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-red-500"><User size={20}/></button>
+                                 <div className="flex items-center gap-3">
+                                     <div className="hidden md:flex flex-col items-end">
+                                         <span className="text-xs font-bold dark:text-white">{session.user.email.split('@')[0]}</span>
+                                         <span className="text-[10px] text-gray-500 capitalize">{role}</span>
+                                     </div>
+                                     <button onClick={() => supabaseClient.auth.signOut()} className="p-2 text-gray-500 hover:text-red-500"><User size={20}/></button>
                                  </div>
                              )}
                              <button onClick={() => setShowSettings(true)} className="p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-white"><Settings size={20} /></button>
                          </div>
                     </header>
 
-                    <main className="max-w-7xl mx-auto px-4 pt-8">
-                        {/* Conditional Rendering based on ViewMode */}
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 max-w-7xl mx-auto px-4 pt-8 w-full">
                         
-                        {viewMode === 'grid' && (
-                            <>
-                                {/* Analytics Cards (Compact) */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><Film size={20}/></div>
-                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Total Items</div><div className="text-xl font-black dark:text-white">{allItems.length}</div></div>
-                                    </div>
-                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                        <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 rounded-lg"><Star size={20}/></div>
-                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Avg Rating</div><div className="text-xl font-black dark:text-white">{analytics.avgRating}</div></div>
-                                    </div>
-                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                        <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg"><CheckSquare size={20}/></div>
-                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Ep. Watched</div><div className="text-xl font-black dark:text-white">{analytics.watchedEpisodes}</div></div>
-                                    </div>
-                                    <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-light-border dark:border-dark-border flex items-center gap-3">
-                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg"><BarChart size={20}/></div>
-                                        <div><div className="text-xs text-gray-500 uppercase font-bold">Ep. Score</div><div className="text-xl font-black dark:text-white">{analytics.avgEpisodeRating}</div></div>
-                                    </div>
-                                </div>
-
-                                {/* List Filters & Search */}
-                                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                                    <div className="flex items-center gap-2 overflow-x-auto">
-                                        {[ { id: 'all', label: 'Everything' }, { id: 'movies', label: 'Movies' }, { id: 'series', label: 'TV Shows' } ].map(f => (
-                                            <button key={f.id} onClick={() => { setActiveFilter(f.id); setActiveSmartList(null); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === f.id && !activeSmartList ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}>{f.label}</button>
-                                        ))}
-                                        {SMART_LISTS.map(list => (
-                                            <button key={list.id} onClick={() => { setActiveSmartList(list.id === activeSmartList ? null : list.id); setActiveFilter('all'); }} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${activeSmartList === list.id ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800'}`}><list.icon size={14}/> {list.label}</button>
+                        {/* DISCOVERY BAR */}
+                        <div className="flex flex-col md:flex-row gap-4 mb-8 items-start md:items-center justify-between">
+                            {/* SEARCH */}
+                            <div className="relative w-full md:w-96 group">
+                                <Search className="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                <input 
+                                    type="text" 
+                                    placeholder={role === 'owner' ? "Search OMDb to add..." : "Search catalog..."}
+                                    value={searchQuery} 
+                                    onChange={(e) => handleSearchInput(e.target.value)}
+                                    className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all border border-transparent focus:border-indigo-500" 
+                                />
+                                {/* OWNER SEARCH RESULTS */}
+                                {role === 'owner' && searchResults.length > 0 && (
+                                    <div className="absolute z-50 mt-2 w-full bg-white dark:bg-dark-card rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                                        <div className="px-3 py-2 text-[10px] uppercase font-bold text-gray-400 bg-gray-50 dark:bg-gray-800/50">Add to Catalog</div>
+                                        {searchResults.map((item) => (
+                                            <div key={item.imdbID} onClick={() => openAddModal(item.imdbID)} className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors">
+                                                <div className="w-8 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                                                    {item.Poster !== "N/A" && <img src={item.Poster} className="w-full h-full object-cover" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-sm dark:text-white truncate">{item.Title}</p>
+                                                    <p className="text-xs text-gray-500">{item.Year} • {item.Type}</p>
+                                                </div>
+                                                <Plus size={16} className="text-indigo-500"/>
+                                            </div>
                                         ))}
                                     </div>
-                                    <div className="relative w-full md:w-64">
-                                        <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Search movies, series..." 
-                                            value={searchQuery} 
-                                            onChange={(e) => handleSearchInput(e.target.value)}
-                                            className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500" 
-                                        />
-                                        {searchResults.length > 0 && (
-                                            <div className="absolute z-50 mt-2 w-full bg-white dark:bg-dark-card rounded-xl shadow-xl max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700">
-                                                {searchResults.map((item, idx) => {
-                                                const inVault = item.media_type !== 'person' && existsInVault(item.imdbID);
-                                                if (item.media_type === 'person') {
-                                                    return (
-                                                        <div key={`${item.id}_person_${idx}`} onClick={() => { onActorClick({ id: item.id, name: item.Title, photo: item.profile_path ? `https://image.tmdb.org/t/p/w185${item.profile_path}` : null }); setSearchResults([]); setSearchQuery(''); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 cursor-pointer">
-                                                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                                                {item.profile_path ? <img src={`https://image.tmdb.org/t/p/w45${item.profile_path}`} className="w-full h-full rounded-full object-cover"/> : <User size={14} />}
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <p className="font-semibold text-sm dark:text-white">{item.Title}</p>
-                                                                <p className="text-xs text-gray-500">Actor • View Credits</p>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                }
-                                                return (
-                                                    <div key={`${item.imdbID}_${idx}`} className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                                                        <div className="flex-1 min-w-0 mr-2">
-                                                            <p className="font-semibold text-sm truncate dark:text-white">{item.Title}</p>
-                                                            <p className="text-xs text-gray-500">{item.Year} • {item.Type}</p>
-                                                        </div>
-                                                        <div className="flex gap-2 shrink-0">
-                                                            {inVault ? (
-                                                                <span className="text-xs px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 font-medium cursor-default">In Vault</span>
-                                                            ) : (
-                                                                <>
-                                                                <button onClick={() => addToVault(item.imdbID, "watchlist")} className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium">Watchlist</button>
-                                                                <button onClick={() => addToVault(item.imdbID, "watched")} className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium">Watched</button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Grid Content */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
-                                    {filteredItems.map((item, idx) => (
-                                        <div key={`${item.imdbID}_${idx}`} onClick={() => setSelectedMovie(item)} className="group relative bg-white dark:bg-dark-card rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-all cursor-pointer border border-light-border dark:border-dark-border">
-                                            <div className="relative aspect-[2/3] overflow-hidden bg-gray-900">
-                                                <img src={tmdbImg(item.tmdb?.credits?.images?.posters?.[0]?.file_path, "w342") || getHighResPoster(item.Poster, 400)} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
-                                                <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                                                    {item.userMeta?.status === 'watched' && <span className="bg-green-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg"><CheckCircle size={10} /></span>}
-                                                </div>
-                                                {item.userMeta?.ratings?.overall > 0 && <div className="absolute bottom-2 left-2 bg-yellow-500 text-white px-1.5 py-0.5 rounded text-xs font-bold flex items-center gap-1 shadow-lg"><Star size={10} fill="currentColor" /> {item.userMeta.ratings.overall}</div>}
-                                            </div>
-                                            <div className="p-3 space-y-1">
-                                                <h3 className="font-bold text-sm line-clamp-1 dark:text-white">{item.Title}</h3>
-                                                <div className="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
-                                                    <span>{item.Year}</span>
-                                                    <span>•</span>
-                                                    <span>{item.Type === "series" ? "TV Series" : "Movie"}</span>
-                                                </div>
-                                                {item.meta?.director && <div className="text-[11px] text-gray-400 line-clamp-1"><span className="font-semibold">Dir:</span> {Array.isArray(item.meta.director) ? item.meta.director.join(", ") : item.meta.director}</div>}
-                                                <div className="flex flex-wrap gap-1 pt-1">
-                                                    {item.meta?.genre?.slice(0, 2).map(g => <span key={g} className="px-1.5 py-0.5 text-[9px] rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{g}</span>)}
-                                                </div>
-                                                {item.Type === "series" && <div className="text-[10px] text-indigo-400 pt-1 font-medium">{item.meta?.totalSeasons || '?'} seasons</div>}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-
-                        {viewMode === 'timeline' && (
-                            <div className="max-w-2xl mx-auto space-y-6">
-                                <h2 className="text-2xl font-black dark:text-white mb-6">Watch History</h2>
-                                {timelineEvents.length === 0 && <div className="text-center text-gray-500 py-10">No history found. Mark items as watched!</div>}
-                                {timelineEvents.map((ev, idx) => (
-                                    <div key={`${ev.imdbID}-${idx}-${ev.watchedOn}`} className="flex gap-4 p-4 bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm relative">
-                                        <div className="w-16 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                                            <img src={getHighResPoster(ev.poster, 200)} className="w-full h-full object-cover" loading="lazy" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold dark:text-white text-base truncate">{ev.title}</h3>
-                                                <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(ev.watchedOn).toLocaleDateString()}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${ev.type === 'movie' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>{ev.type}</span>
-                                                {ev.rating > 0 && <span className="text-yellow-500 text-sm font-bold">★ {ev.rating}</span>}
-                                            </div>
-                                        </div>
-                                        {/* Timeline Connector Line */}
-                                        {idx !== timelineEvents.length - 1 && <div className="absolute left-8 top-28 bottom-[-24px] w-0.5 bg-gray-200 dark:bg-gray-800 -z-10"></div>}
-                                    </div>
-                                ))}
+                                )}
                             </div>
-                        )}
 
-                        {viewMode === 'analytics' && (
-                            <div className="space-y-10">
-                                <div>
-                                    <h2 className="text-2xl font-black dark:text-white mb-6 flex items-center gap-2"><User size={24}/> Top Directors & Actors</h2>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {peopleStats.map((p, idx) => (
-                                        <div key={`${p.name}-${idx}`} className="p-4 rounded-xl bg-white dark:bg-dark-card border border-gray-100 dark:border-gray-800 shadow-sm">
-                                            <div className="font-bold dark:text-white truncate">{p.name}</div>
-                                            <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">{p.type}</div>
-                                            <div className="flex justify-between items-end">
-                                                <span className="text-2xl font-black text-indigo-600">{p.count}</span>
-                                                {p.avgRating > 0 && <span className="text-sm font-bold text-yellow-500">★ {p.avgRating.toFixed(1)}</span>}
-                                            </div>
+                            {/* FILTERS */}
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
+                                <select 
+                                    value={filters.type} 
+                                    onChange={e => setFilters(p => ({...p, type: e.target.value}))}
+                                    className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold py-2 px-3 rounded-lg outline-none cursor-pointer"
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="movie">Movies</option>
+                                    <option value="series">TV Series</option>
+                                </select>
+                                <button 
+                                    onClick={() => setFilters(p => ({...p, quality: p.quality.includes('4K') ? [] : ['4K']}))}
+                                    className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${filters.quality.includes('4K') ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}
+                                >
+                                    4K Only
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* CATALOG GRID */}
+                        {visibleCatalog.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                <Server size={48} className="mb-4 opacity-20"/>
+                                <p className="text-sm font-medium">Catalog is empty or no matches found.</p>
+                                {role === 'owner' && <p className="text-xs mt-2 opacity-60">Use the search bar to find and add items.</p>}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10 pb-20">
+                                {visibleCatalog.map((item) => {
+                                    const userAct = activity[item.id];
+                                    return (
+                                    <div key={item.id} onClick={() => setSelectedItem(item)} className="group relative bg-white dark:bg-dark-card rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer border border-light-border dark:border-dark-border">
+                                        <div className="relative aspect-[2/3] overflow-hidden bg-gray-900">
+                                            <img src={item.meta?.poster || "https://via.placeholder.com/300x450"} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+                                            {/* Quality Badge */}
+                                            {item.quality?.includes('4K') && <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white px-1.5 py-0.5 rounded text-[10px] font-bold border border-white/10">4K</div>}
+                                            {/* Watched Badge */}
+                                            {userAct?.watched && <div className="absolute bottom-2 right-2 bg-green-500 text-white px-1.5 py-0.5 rounded-full shadow-lg"><CheckCircle size={12} fill="currentColor"/></div>}
                                         </div>
-                                    ))}
+                                        <div className="p-3 space-y-1">
+                                            <h3 className="font-bold text-sm line-clamp-1 dark:text-white">{item.title}</h3>
+                                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                                <span>{item.meta?.year}</span>
+                                                <span className="capitalize">{item.type}</span>
+                                            </div>
+                                            {item.languages?.length > 0 && (
+                                                <div className="flex gap-1 pt-1">
+                                                    {item.languages.slice(0,2).map(l => <span key={l} className="text-[9px] px-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-500">{l.substring(0,2).toUpperCase()}</span>)}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div>
-                                    <h2 className="text-2xl font-black dark:text-white mb-6">Library Composition</h2>
-                                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
-                                        <div className="bg-blue-500 h-full" style={{width: `${(allItems.filter(i=>i.Type==='movie').length / allItems.length * 100) || 0}%`}}></div>
-                                        <div className="bg-purple-500 h-full" style={{width: `${(allItems.filter(i=>i.Type==='series').length / allItems.length * 100) || 0}%`}}></div>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Movies ({allItems.filter(i=>i.Type==='movie').length})</span>
-                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500"></div> TV Shows ({allItems.filter(i=>i.Type==='series').length})</span>
-                                    </div>
-                                </div>
+                                )})}
                             </div>
                         )}
                     </main>
 
-                     {/* Detail Modal (TMDB ENHANCED) */}
-                     {selectedMovie && (
-                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                             <div className="bg-white dark:bg-dark-card w-full max-w-lg p-6 rounded-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-                                 {/* 6️⃣ High Quality Hero Image */}
-                                 {selectedMovie.tmdb?.enriched && (
-                                     <div className="absolute top-0 left-0 w-full h-48 rounded-t-2xl z-0 overflow-hidden">
-                                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-dark-card z-10"></div>
-                                         <img src={tmdbImg(selectedMovie.tmdb.credits?.images?.backdrops?.[0]?.file_path, "w780") || getHighResPoster(selectedMovie.Poster, 800)} className="w-full h-full object-cover opacity-50" />
-                                     </div>
-                                 )}
-                                 
-                                 <button onClick={() => setSelectedMovie(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white z-20"><X/></button>
-                                 <div className="relative z-10 mt-20">
-                                    <h2 className="text-3xl font-black dark:text-white mb-1 leading-tight">{selectedMovie.Title}</h2>
-                                    <p className="text-xs text-gray-500 mb-4">{selectedMovie.Year} • {selectedMovie.Runtime}</p>
+                    {/* ITEM DETAIL MODAL */}
+                    {selectedItem && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+                            <div className="bg-white dark:bg-dark-card w-full max-w-2xl p-0 rounded-2xl relative max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                                <div className="relative h-64 shrink-0">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
+                                    <img src={itemPoster(selectedItem)} className="w-full h-full object-cover" />
+                                    <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-20 backdrop-blur-md transition-colors"><X size={20}/></button>
                                     
-                                    {/* 3️⃣ Multi-Source Ratings */}
-                                    {selectedMovie.meta.ratingsExternal && (
-                                        <div className="flex gap-4 mb-6 text-xs font-bold">
-                                            {selectedMovie.meta.ratingsExternal.imdb && selectedMovie.meta.ratingsExternal.imdb.rating && selectedMovie.meta.ratingsExternal.imdb.rating !== "N/A" && (
-                                                <span className="bg-yellow-400/20 text-yellow-600 px-2 py-1 rounded">IMDb {selectedMovie.meta.ratingsExternal.imdb.rating}</span>
-                                            )}
-                                            {selectedMovie.meta.ratingsExternal.rotten && (
-                                                <span className="bg-red-400/20 text-red-600 px-2 py-1 rounded">🍅 {selectedMovie.meta.ratingsExternal.rotten}</span>
-                                            )}
-                                            {selectedMovie.meta.ratingsExternal.metacritic && (
-                                                <span className="bg-green-400/20 text-green-600 px-2 py-1 rounded">MC {selectedMovie.meta.ratingsExternal.metacritic}</span>
-                                            )}
-                                            {/* MAL Rating */}
-                                            {selectedMovie.meta.anime && (
-                                                <a href={selectedMovie.meta.anime.url} target="_blank" className="bg-blue-400/20 text-blue-600 px-2 py-1 rounded hover:bg-blue-400/30">MAL {selectedMovie.meta.anime.malRating || 'N/A'}</a>
-                                            )}
-                                            {/* MDL Placeholder */}
-                                            {selectedMovie.meta.asian && (
-                                                <span className="bg-pink-400/20 text-pink-600 px-2 py-1 rounded">MDL (Link)</span>
-                                            )}
+                                    <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+                                        <h2 className="text-3xl font-black text-white mb-2 leading-none drop-shadow-md">{selectedItem.title}</h2>
+                                        <div className="flex items-center gap-3 text-white/80 text-sm font-medium">
+                                            <span>{selectedItem.meta?.year}</span>
+                                            <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                            <span className="capitalize">{selectedItem.type}</span>
+                                            <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                            <span>{selectedItem.meta?.runtime}</span>
                                         </div>
-                                    )}
-
-                                    <div className="mb-6 text-sm text-gray-600 dark:text-gray-300">
-                                        <p className="mb-2 italic opacity-80">{selectedMovie.Plot}</p>
-                                        <div className="flex flex-wrap gap-2 text-xs">
-                                            {selectedMovie.meta?.genre.map(g => <span key={g} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{g}</span>)}
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-6">
-                                        <h3 className="font-bold text-sm mb-3 dark:text-white flex items-center gap-2"><User size={14}/> Top Cast</h3>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                                            {selectedMovie.meta?.cast.map((a, idx) => (
-                                            <div key={`${a.id || 'cast'}-${idx}`} onClick={() => { if(a.id) onActorClick(a) }} className={`flex gap-2 items-center group ${a.id ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1 transition-colors' : ''}`}>
-                                                {a.photo ? (
-                                                    <img src={a.photo} className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-700" alt={a.name}/>
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-500">{a.name.charAt(0)}</div>
-                                                )}
-                                                <div className="text-xs flex flex-col justify-center min-w-0">
-                                                    <div className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-400 transition-colors">{a.name}</div>
-                                                    <div className="text-gray-500 truncate">{a.character || "Actor"}</div>
-                                                </div>
-                                            </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {selectedMovie.Type === "series" && (
-                                        selectedMovie.meta?.series?.seasons && selectedMovie.meta.series.seasons.length > 0 ? (
-                                            <div className="mb-6">
-                                                <h3 className="font-bold text-sm mb-3 dark:text-white flex items-center gap-2"><Tv size={14}/> Episodes</h3>
-                                                <div className="space-y-6">
-                                                    {selectedMovie.meta.series.seasons.map(season => (
-                                                    <div key={season.season} className="">
-                                                        <div className="font-bold text-xs text-indigo-400 mb-2 border-b border-gray-100 dark:border-gray-800 pb-1 flex justify-between items-end">
-                                                            <span className="text-sm">Season {season.season}</span>
-                                                            {season.airDate && <span className="text-gray-500 font-normal">{season.airDate.substring(0,4)}</span>}
-                                                        </div>
-
-                                                        <div className="space-y-3">
-                                                        {season.episodes.map((ep, eIdx) => (
-                                                            <div key={`${ep.episode}-${eIdx}`} className={`flex gap-3 group relative rounded-lg p-2 ${ep.watched ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}>
-                                                                <div className="w-24 h-14 shrink-0 rounded overflow-hidden bg-gray-200 dark:bg-gray-800 relative">
-                                                                    {ep.still ? (
-                                                                        <img src={tmdbImg(ep.still, "w300")} className={`w-full h-full object-cover transition-opacity ${ep.watched ? 'opacity-50 grayscale' : ''}`} />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-[10px]">No Image</div>
-                                                                    )}
-                                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer" onClick={() => toggleEpisode(selectedMovie.imdbID, season.season, ep.episode)}>
-                                                                        {ep.watched ? <EyeOff className="text-white"/> : <Eye className="text-white"/>}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div className="flex-1 min-w-0 py-0.5">
-                                                                    <div className="flex justify-between items-start">
-                                                                        <span className={`text-sm font-medium truncate ${ep.watched ? 'text-gray-500 line-through' : 'text-gray-900 dark:text-white'}`}>
-                                                                            <span className="font-mono text-gray-400 mr-2 text-xs">{ep.episode}.</span>{ep.title}
-                                                                        </span>
-                                                                        <div className="flex items-center gap-2">
-                                                                            {ep.rating ? (
-                                                                                <span className="text-yellow-500 text-xs font-bold">★ {ep.rating}</span>
-                                                                            ) : (
-                                                                                <div className="opacity-0 group-hover:opacity-100 flex gap-0.5">
-                                                                                    {[1,2,3,4,5].map(r => (
-                                                                                        <button key={r} onClick={() => rateEpisode(selectedMovie.imdbID, season.season, ep.episode, r*2)} className="w-1.5 h-1.5 rounded-full bg-gray-300 hover:bg-yellow-500"></button>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{ep.overview}</p>
-                                                                    <div className="flex justify-between items-center mt-1">
-                                                                        <span className="text-[10px] text-gray-400">{ep.airDate}</span>
-                                                                        {ep.watched && <span className="text-[9px] text-green-500 font-medium bg-green-100 dark:bg-green-900/30 px-1.5 rounded">WATCHED</span>}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                        </div>
-                                                    </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // Fallback
-                                            selectedMovie.meta?.episodes && (
-                                                <div className="mb-6">
-                                                    <h3 className="font-bold text-sm mb-3 dark:text-white">Episodes (OMDb Legacy)</h3>
-                                                    <div className="text-xs text-gray-500">Upgrade to TMDB for richer data...</div>
-                                                </div>
-                                            )
-                                        )
-                                    )}
-                                    
-                                    {/* Example of editable field */}
-                                    <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <div className="flex gap-2">
-                                            <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watched'}}))} className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${selectedMovie.userMeta?.status === 'watched' ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20' : 'dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Watched</button>
-                                            <button onClick={() => updateItem(selectedMovie.imdbID, i => ({...i, userMeta: {...i.userMeta, status: 'watchlist'}}))} className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${selectedMovie.userMeta?.status === 'watchlist' ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Watchlist</button>
-                                        </div>
-                                    </div>
-                                 </div>
-                             </div>
-                         </div>
-                     )}
-
-                    {/* 3️⃣ Actor Filmography Modal */}
-                    {actorModalData && (
-                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
-                            <div className="bg-white dark:bg-dark-card w-full max-w-2xl h-[80vh] rounded-2xl relative flex flex-col overflow-hidden">
-                                <button onClick={() => setActorModalData(null)} className="absolute top-4 right-4 p-2 bg-black/20 rounded-full text-white hover:bg-black/40 z-10"><X/></button>
-                                
-                                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 shrink-0 bg-white dark:bg-dark-card z-0 relative">
-                                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                                        {actorModalData.photo ? <img src={actorModalData.photo} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl font-bold text-gray-400">{actorModalData.name.charAt(0)}</div>}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-black dark:text-white">{actorModalData.name}</h2>
-                                        <p className="text-sm text-gray-500">Filmography</p>
                                     </div>
                                 </div>
+                                
+                                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white dark:bg-dark-card">
+                                    <div className="flex flex-col md:flex-row gap-6">
+                                        <div className="flex-1 space-y-6">
+                                            {/* Tech Specs */}
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedItem.quality?.map(q => <span key={q} className="px-2 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold border border-indigo-100 dark:border-indigo-800">{q}</span>)}
+                                                {selectedItem.languages?.map(l => <span key={l} className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-bold">{l}</span>)}
+                                                <span className="px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-green-600 text-xs font-bold border border-green-100 dark:border-green-800 flex items-center gap-1"><Server size={10}/> {selectedItem.source}</span>
+                                            </div>
 
-                                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                                        {actorModalData.credits.map((credit, cIdx) => {
-                                            // Handle TMDB to IMDb ID resolution lazily or just skip check
-                                            // Since we don't have IMDb ID here easily without another fetch, we rely on Search title match later or manual
-                                            return (
-                                            <div key={`${credit.id}-${cIdx}`} className="group relative">
-                                                <div className="aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
-                                                    <img src={tmdbImg(credit.poster_path, "w342")} className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" loading="lazy"/>
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            // For filmography add, we trigger a search by title since we need IMDb ID
-                                                            // This is a tradeoff for speed vs complexity
-                                                            handleSearch(credit.title || credit.name);
-                                                            setActorModalData(null);
-                                                        }}
-                                                        className="absolute bottom-2 right-2 bg-indigo-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                                                        title="Find in Vault"
-                                                    >
-                                                        <Search size={12}/>
+                                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                                                {selectedItem.meta?.plot || "No description available."}
+                                            </p>
+
+                                            {/* Ratings */}
+                                            {selectedItem.meta?.ratings && (
+                                                <div className="flex gap-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                                                    {selectedItem.meta.ratings.imdb && <div className="text-xs font-bold text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded">IMDb {selectedItem.meta.ratings.imdb}</div>}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Activity Sidebar */}
+                                        <div className="w-full md:w-48 shrink-0 space-y-3">
+                                            <button 
+                                                className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg ${activity[selectedItem.id]?.watched ? 'bg-green-500 text-white shadow-green-500/30' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-indigo-600 hover:text-white'}`}
+                                                onClick={() => {
+                                                    // Optimistic update
+                                                    const newVal = !activity[selectedItem.id]?.watched;
+                                                    setActivity(p => ({...p, [selectedItem.id]: { ...p[selectedItem.id], watched: newVal }}));
+                                                    supabaseClient.from('user_activity').upsert({ user_id: session.user.id, catalog_id: selectedItem.id, watched: newVal });
+                                                }}
+                                            >
+                                                {activity[selectedItem.id]?.watched ? <><CheckCircle size={18}/> Watched</> : <><Eye size={18}/> Mark Watched</>}
+                                            </button>
+                                            
+                                            {role === 'owner' && (
+                                                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-2">Owner Controls</p>
+                                                    <button className="w-full py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors flex items-center justify-center gap-2">
+                                                        <Trash size={14}/> Remove Item
                                                     </button>
                                                 </div>
-                                                <h4 className="text-xs font-bold dark:text-white line-clamp-1">{credit.title || credit.name}</h4>
-                                                <p className="text-[10px] text-gray-500">{credit.character}</p>
-                                                <p className="text-[10px] text-gray-600">{(credit.release_date || credit.first_air_date || "").substring(0,4)}</p>
-                                            </div>
-                                        )})}
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKeys={apiKeys} setApiKeys={setApiKeys} theme={theme} setTheme={setTheme} 
-                        onImport={handleImport}
-                        onExport={handleExport}
-                        onReset={async () => {
-                          if (session) {
-                             await supabaseClient.from("vault_items").delete().eq("user_id", session.user.id);
-                          }
-                          setVault({ watched: {}, watchlist: {} });
-                          localStorage.removeItem("vault_v6_data");
-                        }}
-                    />
+                    {/* ADD ITEM MODAL (OWNER) */}
+                    {addItemModal && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                            <div className="bg-white dark:bg-dark-card w-full max-w-lg p-6 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+                                <h2 className="text-xl font-black dark:text-white mb-6">Add to Catalog</h2>
+                                
+                                <div className="flex gap-4 mb-6">
+                                    <div className="w-24 h-36 bg-gray-200 rounded-lg overflow-hidden shrink-0">
+                                        <img src={addItemModal.meta.poster} className="w-full h-full object-cover"/>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold dark:text-white">{addItemModal.title}</h3>
+                                        <p className="text-xs text-gray-500">{addItemModal.meta.year} • {addItemModal.type}</p>
+                                        <div className="mt-2 text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded inline-block font-bold">New ID: {addItemModal.imdb_id}</div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 mb-6">
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Quality</label>
+                                        <div className="flex gap-2">
+                                            {['4K', '1080p', '720p', 'HDR'].map(q => (
+                                                <button 
+                                                    key={q}
+                                                    onClick={() => setAddItemModal(p => ({...p, quality: p.quality.includes(q) ? p.quality.filter(x=>x!==q) : [...p.quality, q]}))}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${addItemModal.quality.includes(q) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 dark:border-gray-700 text-gray-500'}`}
+                                                >{q}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Languages</label>
+                                        <div className="flex gap-2">
+                                            {['English', 'Spanish', 'Japanese', 'Korean'].map(l => (
+                                                <button 
+                                                    key={l}
+                                                    onClick={() => setAddItemModal(p => ({...p, languages: p.languages.includes(l) ? p.languages.filter(x=>x!==l) : [...p.languages, l]}))}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${addItemModal.languages.includes(l) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 dark:border-gray-700 text-gray-500'}`}
+                                                >{l}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button onClick={() => setAddItemModal(null)} className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+                                    <button onClick={saveCatalogItem} className="flex-1 py-3 rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-colors">Confirm Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {loading && <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div></div>}
+
+                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKeys={apiKeys} setApiKeys={setApiKeys} theme={theme} setTheme={setTheme} />
                 </div>
             );
         }
+
+        // Helper
+        const itemPoster = (i) => i.meta?.poster || "https://via.placeholder.com/300x450";
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
