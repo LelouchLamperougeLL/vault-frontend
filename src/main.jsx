@@ -1,12 +1,19 @@
 // src/main.jsx
 
-import React, { useEffect, useState } from "react";
+/* =========================================================
+   GLOBAL STYLES (CRITICAL)
+   ========================================================= */
+import "./index.css";
+
+/* =========================================================
+   REACT
+   ========================================================= */
+import React from "react";
 import ReactDOM from "react-dom/client";
 
 /* =========================================================
    CONFIG & HOOKS
    ========================================================= */
-
 import { API_KEYS } from "./config/constants";
 import useAdmin from "./hooks/useAdmin";
 import useEnrichment from "./hooks/useEnrichment";
@@ -14,13 +21,11 @@ import useEnrichment from "./hooks/useEnrichment";
 /* =========================================================
    ENGINES
    ========================================================= */
-
 import { smartSearch } from "./engines/search.engine";
 
 /* =========================================================
    UI COMPONENTS
    ========================================================= */
-
 import VaultLogo from "./components/ui/VaultLogo";
 import Button from "./components/ui/Button";
 import MediaCard from "./components/media/MediaCard";
@@ -30,24 +35,18 @@ import AdminSuggestionsModal from "./components/admin/AdminSuggestionsModal";
 /* =========================================================
    APP
    ========================================================= */
-
 function App() {
-  /* -----------------------------
-     Core State
-  ----------------------------- */
+  const [query, setQuery] = React.useState("");
+  const [results, setResults] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
 
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [view, setView] = useState("grid");
-  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [selectedItem, setSelectedItem] = React.useState(null);
+  const [view, setView] = React.useState("grid");
+  const [showAdminModal, setShowAdminModal] = React.useState(false);
 
   /* -----------------------------
-     Hooks
+     Admin + Enrichment
   ----------------------------- */
-
   const {
     isAdmin,
     suggestions,
@@ -63,7 +62,6 @@ function App() {
   /* -----------------------------
      Search
   ----------------------------- */
-
   const runSearch = async e => {
     e?.preventDefault();
     if (!query.trim()) return;
@@ -78,18 +76,18 @@ function App() {
         "all"
       );
       setResults(found);
+    } catch (err) {
+      console.error("Search failed", err);
     } finally {
       setLoading(false);
     }
   };
 
   /* -----------------------------
-     Detail Open (with enrichment)
+     Detail (with enrichment)
   ----------------------------- */
-
   const openDetail = async item => {
     setSelectedItem(item);
-
     const enriched = await enrich(item);
     if (enriched) setSelectedItem(enriched);
   };
@@ -97,7 +95,6 @@ function App() {
   /* -----------------------------
      Render
   ----------------------------- */
-
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
@@ -215,7 +212,6 @@ function App() {
 /* =========================================================
    BOOTSTRAP
    ========================================================= */
-
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(

@@ -1,122 +1,67 @@
-/* =========================================
-   TAILWIND BASE
-========================================= */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* =========================================
-   GLOBAL RESETS & DEFAULTS
-========================================= */
+/* =========================================================
+   GLOBAL BASE STYLES
+   ========================================================= */
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    font-family: Inter, system-ui, -apple-system,
+      BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
   }
 
   body {
     @apply bg-slate-950 text-white antialiased;
-    font-family: Inter, system-ui, -apple-system,
-      BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-
-  /* Improve image rendering */
-  img {
-    image-rendering: -webkit-optimize-contrast;
-  }
-
-  /* Remove default focus outline, keep accessible ring */
-  :focus {
-    outline: none;
-  }
-
-  :focus-visible {
-    @apply ring-2 ring-indigo-500/50;
   }
 }
 
-/* =========================================
-   CUSTOM ANIMATIONS
-========================================= */
+/* =========================================================
+   REUSABLE COMPONENT STYLES
+   ========================================================= */
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
 
 @layer utilities {
-  /* Fade + slide up (used in cards, modals) */
   @keyframes reveal {
     from {
       opacity: 0;
-      transform: translateY(12px) scale(0.98);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
     }
   }
 
   .animate-reveal {
-    animation: reveal 0.45s ease-out both;
-  }
-
-  /* Subtle pulse for loading / highlights */
-  @keyframes soft-pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
-
-  .animate-soft-pulse {
-    animation: soft-pulse 1.8s ease-in-out infinite;
-  }
-
-  /* Slow spin (used optionally for loading icons) */
-  @keyframes slow-spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .animate-slow-spin {
-    animation: slow-spin 6s linear infinite;
+    animation: reveal 0.4s ease-out both;
   }
 }
 
-/* =========================================
-   SCROLLBAR (DESKTOP ONLY)
-========================================= */
+/* =========================================================
+   SCROLLBAR (OPTIONAL BUT NICE)
+   ========================================================= */
 
-@layer utilities {
-  /* Chrome / Edge / Safari */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: rgba(99, 102, 241, 0.35);
-    border-radius: 999px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(99, 102, 241, 0.6);
-  }
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* =========================================
-   TEXT SELECTION
-========================================= */
+::-webkit-scrollbar-track {
+  background: #020617; /* slate-950 */
+}
 
-::selection {
-  background-color: rgba(99, 102, 241, 0.35);
-  color: white;
+::-webkit-scrollbar-thumb {
+  background-color: #334155; /* slate-700 */
+  border-radius: 6px;
 }
