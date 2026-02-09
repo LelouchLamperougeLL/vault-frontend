@@ -62,9 +62,78 @@ export const fetchFromCloud = async (userId: string): Promise<Record<string, any
   return result;
 };
 
+// Custom lists sync
+export const syncCustomLists = async (lists: any[], userId: string) => {
+  const { error } = await supabase
+    .from('custom_lists')
+    .upsert(
+      lists.map((list) => ({
+        user_id: userId,
+        list_id: list.id,
+        list_data: list,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: 'user_id,list_id' }
+    );
+
+  if (error) {
+    console.error('Custom lists sync failed:', error);
+    throw error;
+  }
+};
+
+export const fetchCustomLists = async (userId: string): Promise<any[]> => {
+  const { data, error } = await supabase
+    .from('custom_lists')
+    .select('list_data')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Fetch custom lists failed:', error);
+    throw error;
+  }
+
+  return data?.map((row) => row.list_data) || [];
+};
+
+// Activity feed
+export const addActivity = async (activity: any, userId: string) => {
+  const { error } = await supabase.from('activities').insert({
+    user_id: userId,
+    activity_data: activity,
+    created_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error('Add activity failed:', error);
+  }
+};
+
+export const fetchActivities = async (userId: string, limit: number = 50): Promise<any[]> => {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('activity_data')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Fetch activities failed:', error);
+    return [];
+  }
+
+  return data?.map((row) => row.activity_data) || [];
+};
+
 // Auth functions
-export const signUp = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+export const signUp = async (email: string, password: string, username?: string) => {
+  const { data, error } = await supabase.auth.signUp({ 
+    email, 
+    password,
+    options: {
+      data: { username }
+    }
+  });
   if (error) throw error;
   return data;
 };
@@ -84,4 +153,28 @@ export const getSession = async () => {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
   return data.session;
+};
+
+export const updateProfile = async (_userId: string, updates: { username?: string; avatar?: string }) => {
+  const { error } = await supabase.auth.updateUser({
+    data: updates
+  });
+  if (error) throw error;
+};
+
+// Real-time subscriptions
+export const subscribeToVault = (userId: string, callback: (payload: any) => void) => {
+  return supabase
+    .channel('vault_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'vault_items',
+        filter: `user_id=eq.${userId}`,
+      },
+      callback
+    )
+    .subscribe();
 };

@@ -1,25 +1,28 @@
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from 'recharts';
 import { 
   BarChart3, 
   CheckCircle, 
-  TrendingUp, 
   Star, 
   Calendar, 
   User, 
   Award,
   Clock,
-  Flame
+  Flame,
+  Heart,
+  Target,
+  Zap,
+  Film
 } from 'lucide-react';
 import type { VaultItem } from '@/types';
-import { useAnalytics } from '@/hooks/useAnalytics';
+import { useEnhancedAnalytics } from '@/hooks/useEnhancedAnalytics';
 import { cn } from '@/lib/utils';
 
 interface AnalyticsDashboardProps {
@@ -31,29 +34,46 @@ function StatCard({
   icon: Icon, 
   label, 
   value, 
-  color = 'indigo' 
+  subValue,
+  color = 'indigo',
+  trend
 }: { 
   icon: React.ElementType; 
   label: string; 
   value: string | number;
-  color?: 'indigo' | 'green' | 'amber' | 'blue' | 'yellow';
+  subValue?: string;
+  color?: 'indigo' | 'green' | 'amber' | 'blue' | 'yellow' | 'rose' | 'purple';
+  trend?: 'up' | 'down';
 }) {
   const colorClasses = {
-    indigo: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
-    green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-    amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-    yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
+    indigo: 'from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:text-indigo-400',
+    green: 'from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400',
+    amber: 'from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400',
+    blue: 'from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400',
+    yellow: 'from-yellow-500/20 to-amber-500/20 text-yellow-600 dark:text-yellow-400',
+    rose: 'from-rose-500/20 to-pink-500/20 text-rose-600 dark:text-rose-400',
+    purple: 'from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400',
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm flex items-center gap-3 border border-gray-100 dark:border-gray-800">
-      <div className={cn('p-2 rounded-lg', colorClasses[color])}>
-        <Icon size={18} />
+    <div className="glass-card rounded-2xl p-5">
+      <div className="flex items-start justify-between">
+        <div className={cn('p-3 rounded-xl bg-gradient-to-br', colorClasses[color])}>
+          <Icon size={20} />
+        </div>
+        {trend && (
+          <span className={cn(
+            'text-xs font-bold px-2 py-1 rounded-full',
+            trend === 'up' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+          )}>
+            {trend === 'up' ? '↑' : '↓'}
+          </span>
+        )}
       </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-wide opacity-60 font-bold dark:text-gray-400">{label}</p>
-        <p className="text-xl font-black dark:text-white">{value}</p>
+      <div className="mt-4">
+        <p className="text-[10px] uppercase tracking-wide text-gray-500 font-bold">{label}</p>
+        <p className="text-2xl font-black dark:text-white">{value}</p>
+        {subValue && <p className="text-xs text-gray-500 mt-1">{subValue}</p>}
       </div>
     </div>
   );
@@ -70,11 +90,11 @@ function ProgressBar({ label, value, max, color = 'indigo' }: {
   
   return (
     <div>
-      <div className="flex justify-between text-[10px] mb-1 font-bold dark:text-gray-400">
-        <span>{label}</span>
-        <span>{value}</span>
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="font-medium text-gray-600 dark:text-gray-400">{label}</span>
+        <span className="font-bold text-gray-900 dark:text-white">{value}</span>
       </div>
-      <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-500', color)}
           style={{ width: `${percentage}%` }}
@@ -86,66 +106,162 @@ function ProgressBar({ label, value, max, color = 'indigo' }: {
 
 // Activity Calendar Component
 function ActivityCalendar({ calendar }: { calendar: { date: string; count: number }[] }) {
+  const maxCount = Math.max(...calendar.map((d) => d.count), 1);
+
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm mb-6">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
-        <Calendar size={14} /> Watching Activity
+    <div className="glass-card p-5 rounded-2xl">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+        <Calendar size={14} /> Watching Activity (Last 6 Months)
       </h3>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-[3px]">
         {calendar.map((d) => (
           <div
             key={d.date}
             title={`${d.date}: ${d.count} watched`}
             className={cn(
-              'w-2.5 h-2.5 rounded-sm transition-colors',
+              'w-3 h-3 rounded-[2px] transition-colors hover:ring-2 hover:ring-indigo-500/50',
               d.count === 0 ? 'bg-gray-100 dark:bg-gray-800' :
-              d.count < 2 ? 'bg-indigo-300 dark:bg-indigo-900' :
-              d.count < 4 ? 'bg-indigo-500 dark:bg-indigo-600' :
-              'bg-indigo-700 dark:bg-indigo-400'
+              d.count < maxCount * 0.25 ? 'bg-indigo-200 dark:bg-indigo-900/40' :
+              d.count < maxCount * 0.5 ? 'bg-indigo-400 dark:bg-indigo-700' :
+              d.count < maxCount * 0.75 ? 'bg-indigo-600 dark:bg-indigo-500' :
+              'bg-indigo-800 dark:bg-indigo-400'
             )}
           />
         ))}
       </div>
-    </div>
-  );
-}
-
-// Achievement Badge
-function AchievementBadge({ achievement }: { achievement: { id: string; label: string; unlocked: boolean } }) {
-  return (
-    <div
-      className={cn(
-        'p-3 rounded-lg text-xs font-bold text-center border transition-all',
-        achievement.unlocked
-          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30'
-          : 'bg-gray-50 text-gray-400 border-gray-100 dark:bg-gray-800/50 dark:border-gray-800'
-      )}
-    >
-      {achievement.label}
-    </div>
-  );
-}
-
-// Gentle Reminder
-function GentleReminder({ message }: { message: string | null }) {
-  if (!message) return null;
-
-  return (
-    <div className="mb-6 px-6">
-      <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 p-3 rounded-xl text-sm font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2 animate-in fade-in">
-        <Clock size={16} /> {message}
+      <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+        <span>Less</span>
+        <div className="flex gap-1">
+          <div className="w-3 h-3 rounded-[2px] bg-gray-100 dark:bg-gray-800" />
+          <div className="w-3 h-3 rounded-[2px] bg-indigo-200 dark:bg-indigo-900/40" />
+          <div className="w-3 h-3 rounded-[2px] bg-indigo-400 dark:bg-indigo-700" />
+          <div className="w-3 h-3 rounded-[2px] bg-indigo-600 dark:bg-indigo-500" />
+          <div className="w-3 h-3 rounded-[2px] bg-indigo-800 dark:bg-indigo-400" />
+        </div>
+        <span>More</span>
       </div>
     </div>
   );
 }
 
-// Streak Badge
-function StreakBadge({ streak }: { streak: number }) {
-  if (!streak) return null;
+// Achievement Card
+function AchievementCard({ achievement }: { achievement: { id: string; label: string; description: string; unlocked: boolean; icon: string; tier: string; progress: number; maxProgress: number } }) {
+  const tierColors: Record<string, string> = {
+    bronze: 'from-amber-600 to-amber-700',
+    silver: 'from-gray-400 to-gray-500',
+    gold: 'from-yellow-400 to-amber-500',
+    platinum: 'from-cyan-400 to-blue-500',
+  };
+
+  const percent = Math.round((achievement.progress / achievement.maxProgress) * 100);
 
   return (
-    <div className="flex items-center gap-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-full text-xs font-bold border border-orange-200 dark:border-orange-800/50 animate-in fade-in">
-      <Flame size={14} /> {streak}-day streak
+    <div
+      className={cn(
+        'p-4 rounded-xl border transition-all',
+        achievement.unlocked
+          ? 'bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-800/50'
+          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
+          achievement.unlocked
+            ? `bg-gradient-to-br ${tierColors[achievement.tier]} text-white shadow-lg`
+            : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+        )}>
+          {achievement.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className={cn(
+            'font-bold text-sm',
+            achievement.unlocked ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+          )}>
+            {achievement.label}
+          </h4>
+          <p className="text-xs text-gray-500 mt-0.5">{achievement.description}</p>
+          
+          {/* Progress */}
+          <div className="mt-2">
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-gray-400">{achievement.progress} / {achievement.maxProgress}</span>
+              <span className="font-bold text-indigo-600">{percent}%</span>
+            </div>
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all duration-500',
+                  achievement.unlocked ? 'bg-gradient-to-r from-yellow-400 to-amber-500' : 'bg-indigo-500'
+                )}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Watch Goals
+function WatchGoals({ goals }: { goals: { year: number; target: number; current: number }[] }) {
+  return (
+    <div className="glass-card p-5 rounded-2xl">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+        <Target size={14} /> Watch Goals
+      </h3>
+      <div className="space-y-4">
+        {goals.map((goal) => {
+          const percent = Math.min((goal.current / goal.target) * 100, 100);
+          return (
+            <div key={goal.target}>
+              <div className="flex justify-between text-xs mb-2">
+                <span className="font-medium text-gray-600 dark:text-gray-400">
+                  {goal.target} titles in {goal.year}
+                </span>
+                <span className="font-bold text-indigo-600">{goal.current} / {goal.target}</span>
+              </div>
+              <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Taste Profile
+function TasteProfile({ profile }: { profile: { label: string; value: number; icon: string }[] }) {
+  return (
+    <div className="glass-card p-5 rounded-2xl">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+        <Zap size={14} /> Your Taste Profile
+      </h3>
+      <div className="space-y-3">
+        {profile.slice(0, 5).map((p) => (
+          <div key={p.label} className="flex items-center gap-3">
+            <span className="text-lg">{p.icon}</span>
+            <div className="flex-1">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="font-medium text-gray-600 dark:text-gray-400">{p.label}</span>
+                <span className="font-bold text-gray-900 dark:text-white">{p.value}%</span>
+              </div>
+              <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                  style={{ width: `${p.value}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -160,90 +276,65 @@ export function AnalyticsDashboard({ items }: AnalyticsDashboardProps) {
     peopleAnalytics,
     tasteProfile,
     achievements,
+    watchGoals,
     reminder,
-  } = useAnalytics(items);
+    recentlyWatched,
+    favorites,
+  } = useEnhancedAnalytics(items);
 
   // Prepare chart data
   const genreData = Object.entries(stats.byGenre)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name, value]) => ({ name, value }));
-
-  const yearData = Object.entries(stats.byYear)
-    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-    .slice(-6)
+    .slice(0, 8)
     .map(([name, value]) => ({ name, value }));
 
   const monthlyChartData = monthlyData.map(([month, count]) => ({
-    month: month.slice(5), // Get MM from YYYY-MM
+    month: month.slice(5),
     count,
   }));
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-6xl mx-auto pb-20">
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto pb-20">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h2 className="text-xl font-bold dark:text-white">Library Analytics</h2>
-            <span className="text-xs text-gray-500">Insights from your vault</span>
-          </div>
-          <StreakBadge streak={streak.streak} />
+        <div>
+          <h2 className="text-2xl font-black dark:text-white flex items-center gap-3">
+            <BarChart3 size={28} className="text-indigo-500" />
+            Library Analytics
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">Insights and statistics from your vault</p>
         </div>
+        {streak.streak > 0 && (
+          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 text-orange-700 dark:text-orange-400 px-4 py-2 rounded-full text-sm font-bold border border-orange-200 dark:border-orange-800/50">
+            <Flame size={16} className="text-orange-500" />
+            {streak.streak}-day streak
+          </div>
+        )}
       </div>
 
       {/* Reminder */}
-      <GentleReminder message={reminder} />
+      {reminder && (
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 p-4 rounded-xl text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <Clock size={18} />
+          {reminder}
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={Film} label="Total Titles" value={stats.total} color="indigo" />
+        <StatCard icon={CheckCircle} label="Watched" value={stats.watched} subValue={`${stats.watchlist} in watchlist`} color="green" />
+        <StatCard icon={Star} label="Avg Rating" value={stats.avgRating} color="yellow" />
+        <StatCard icon={Clock} label="Watch Time" value={`${stats.totalWatchTime}h`} color="blue" />
+      </div>
 
       {/* Activity Calendar */}
       <ActivityCalendar calendar={calendar} />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={BarChart3} label="Total Titles" value={stats.total} />
-        <StatCard icon={CheckCircle} label="Watched" value={stats.watched} color="green" />
-        <StatCard icon={TrendingUp} label="In Progress" value={stats.progress} color="amber" />
-        <StatCard icon={Star} label="Avg Rating" value={stats.avgRating} color="yellow" />
-      </div>
-
-      {/* Series Completion */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm flex items-center gap-4 border border-gray-100 dark:border-gray-800">
-        <div className="relative flex items-center justify-center">
-          <svg width="48" height="48" className="-rotate-90">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              className="text-gray-200 dark:text-gray-800"
-              fill="none"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              strokeDasharray={2 * Math.PI * 20}
-              strokeDashoffset={2 * Math.PI * 20 * (1 - seriesProgress.percent / 100)}
-              strokeLinecap="round"
-              className="text-indigo-500"
-              fill="none"
-            />
-          </svg>
-          <span className="absolute text-xs font-black text-gray-900 dark:text-white">{seriesProgress.percent}%</span>
-        </div>
-        <div>
-          <div className="text-sm font-black dark:text-white uppercase tracking-wider">Series Completion</div>
-          <div className="text-xs text-gray-500">{seriesProgress.percent}% of all tracked episodes</div>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
+      {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Genre Breakdown */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="glass-card p-5 rounded-2xl">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Top Genres</h3>
           <div className="space-y-3">
             {genreData.map((genre) => (
@@ -252,37 +343,30 @@ export function AnalyticsDashboard({ items }: AnalyticsDashboardProps) {
                 label={genre.name}
                 value={genre.value}
                 max={genreData[0]?.value || 1}
-                color="bg-indigo-500"
+                color="bg-gradient-to-r from-indigo-500 to-purple-500"
               />
             ))}
           </div>
         </div>
 
-        {/* Year Trend */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Release Years</h3>
-          <div className="space-y-3">
-            {yearData.map((year) => (
-              <ProgressBar
-                key={year.name}
-                label={year.name}
-                value={year.value}
-                max={Math.max(...yearData.map((y) => y.value))}
-                color="bg-purple-500"
-              />
-            ))}
-          </div>
-        </div>
+        {/* Taste Profile */}
+        <TasteProfile profile={tasteProfile} />
       </div>
 
       {/* Monthly Chart */}
       {monthlyChartData.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Monthly Watching Habits</h3>
-          <div className="h-48">
+        <div className="glass-card p-5 rounded-2xl">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Monthly Activity</h3>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+              <AreaChart data={monthlyChartData}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip
@@ -293,102 +377,134 @@ export function AnalyticsDashboard({ items }: AnalyticsDashboardProps) {
                     color: '#fff',
                   }}
                 />
-                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="count" stroke="#6366f1" fillOpacity={1} fill="url(#colorCount)" strokeWidth={2} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       )}
 
+      {/* Watch Goals */}
+      <WatchGoals goals={watchGoals} />
+
       {/* People Analytics */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="glass-card p-5 rounded-2xl">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
             <User size={14} /> Top Directors
           </h3>
           <div className="space-y-2">
             {peopleAnalytics.directors.map(([name, count]) => (
-              <div key={name} className="flex justify-between text-xs py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                <span className="dark:text-gray-300 truncate pr-2">{name}</span>
-                <span className="font-bold dark:text-white">{count}</span>
+              <div key={name} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <span className="text-gray-700 dark:text-gray-300 truncate pr-2">{name}</span>
+                <span className="font-bold text-gray-900 dark:text-white">{count}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="glass-card p-5 rounded-2xl">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
             <User size={14} /> Top Actors
           </h3>
           <div className="space-y-2">
             {peopleAnalytics.actors.map(([name, count]) => (
-              <div key={name} className="flex justify-between text-xs py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                <span className="dark:text-gray-300 truncate pr-2">{name}</span>
-                <span className="font-bold dark:text-white">{count}</span>
+              <div key={name} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <span className="text-gray-700 dark:text-gray-300 truncate pr-2">{name}</span>
+                <span className="font-bold text-gray-900 dark:text-white">{count}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Taste Profile */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
-          <TrendingUp size={14} /> Your Taste Profile
-        </h3>
-        <div className="space-y-3">
-          {tasteProfile.map((p) => (
-            <ProgressBar
-              key={p.label}
-              label={p.label}
-              value={p.value}
-              max={100}
-              color="bg-gradient-to-r from-indigo-500 to-purple-500"
-            />
-          ))}
-        </div>
-      </div>
-
       {/* Achievements */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+      <div>
         <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
           <Award size={14} /> Achievements
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {achievements.map((a) => (
-            <AchievementBadge key={a.id} achievement={a} />
+            <AchievementCard key={a.id} achievement={a} />
           ))}
         </div>
       </div>
 
-      {/* Top Rated */}
-      {stats.topRated.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+      {/* Recently Watched */}
+      {recentlyWatched.length > 0 && (
+        <div className="glass-card p-5 rounded-2xl">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
-            <Star size={14} /> Top Rated
+            <Clock size={14} /> Recently Watched
           </h3>
-          <ul className="space-y-2">
-            {stats.topRated.map((item) => (
-              <li
-                key={item.imdbID}
-                className="text-sm flex justify-between items-center py-1 border-b border-gray-50 dark:border-gray-800/50 last:border-0"
-              >
-                <span className="truncate flex-1 pr-2 dark:text-gray-300">{item.Title}</span>
-                <span className="font-bold text-yellow-500 text-xs flex items-center gap-1">
-                  <Star size={10} fill="currentColor" /> {item.userMeta.ratings.overall}
-                </span>
-              </li>
+          <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+            {recentlyWatched.slice(0, 10).map((item) => (
+              <div key={item.imdbID} className="flex-shrink-0 w-24">
+                <img
+                  src={item.Poster !== 'N/A' ? item.Poster.replace(/_V1_.*\.jpg$/, '_V1_SX200.jpg') : 'https://via.placeholder.com/200x300?text=No+Poster'}
+                  alt={item.Title}
+                  className="w-full aspect-[2/3] object-cover rounded-lg bg-gray-200 dark:bg-gray-800"
+                />
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate mt-2">{item.Title}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
-      {/* Rewatch Stats */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Rewatches</h3>
-        <div className="flex flex-col items-center justify-center h-32">
-          <p className="text-5xl font-black text-center text-indigo-600 dark:text-indigo-400">{stats.rewatchCount}</p>
-          <p className="text-xs text-center opacity-60 mt-2 uppercase tracking-widest font-bold">Total Rewatches</p>
+      {/* Favorites */}
+      {favorites.length > 0 && (
+        <div className="glass-card p-5 rounded-2xl">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+            <Heart size={14} /> Your Favorites
+          </h3>
+          <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+            {favorites.slice(0, 10).map((item) => (
+              <div key={item.imdbID} className="flex-shrink-0 w-24">
+                <img
+                  src={item.Poster !== 'N/A' ? item.Poster.replace(/_V1_.*\.jpg$/, '_V1_SX200.jpg') : 'https://via.placeholder.com/200x300?text=No+Poster'}
+                  alt={item.Title}
+                  className="w-full aspect-[2/3] object-cover rounded-lg bg-gray-200 dark:bg-gray-800"
+                />
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate mt-2">{item.Title}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Series Completion */}
+      <div className="glass-card p-5 rounded-2xl flex items-center gap-6">
+        <div className="relative flex items-center justify-center">
+          <svg width="64" height="64" className="-rotate-90">
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke="currentColor"
+              strokeWidth="6"
+              className="text-gray-100 dark:text-gray-800"
+              fill="none"
+            />
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke="currentColor"
+              strokeWidth="6"
+              strokeDasharray={2 * Math.PI * 28}
+              strokeDashoffset={2 * Math.PI * 28 * (1 - seriesProgress.percent / 100)}
+              strokeLinecap="round"
+              className="text-indigo-500"
+              fill="none"
+            />
+          </svg>
+          <span className="absolute text-lg font-black text-gray-900 dark:text-white">{seriesProgress.percent}%</span>
+        </div>
+        <div>
+          <div className="text-sm font-black uppercase tracking-wider text-gray-900 dark:text-white">Series Completion</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {seriesProgress.watched} of {seriesProgress.total} episodes watched
+          </div>
         </div>
       </div>
     </div>
