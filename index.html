@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Vault v9.2 - Profile Edition</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        vault: {
+                            950: '#050609',
+                            900: '#0a0c12',
+                            800: '#11141d',
+                            700: '#1c2230',
+                            accent: '#6366f1',
+                            secondary: '#10b981',
+                            gold: '#f59e0b'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'reveal': 'reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'gradientShift': 'gradientShift 6s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        reveal: {
+                            '0%': { opacity: '0', transform: 'translateY(40px) scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        },
+                        gradientShift: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                            '100%': { backgroundPosition: '0% 50%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(99,102,241,0.08), transparent 40%),
+                radial-gradient(circle at 80% 0%, rgba(16,185,129,0.06), transparent 40%),
+                linear-gradient(to bottom, #050609, #0a0c12);
+            color: #e2e8f0;
+            scrollbar-gutter: stable;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        h1, h2, h3 {
+            letter-spacing: -0.02em;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0c12; }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(to bottom, #1c2230, #2a3245); 
+            border-radius: 10px; 
+            border: 2px solid #0a0c12;
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+        }
+
+        .glass {
+            background: rgba(17, 20, 29, 0.6);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow:
+                0 8px 32px rgba(0,0,0,0.35),
+                inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #818cf8, #c084fc, #10b981);
+            background-size: 200% 200%;
+            animation: gradientShift 6s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Profile Hero Enhancement */
+        .profile-hero {
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 30%, rgba(99,102,241,0.15), transparent 50%),
+                        radial-gradient(circle at 80% 0%, rgba(16,185,129,0.1), transparent 50%);
+            pointer-events: none;
+        }
+        .profile-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            background: linear-gradient(to bottom, transparent, rgba(5,6,9,0.7));
+            pointer-events: none;
+        }
+
+        /* Card Glow Effect */
+        .group:hover .media-glow {
+            opacity: 1;
+        }
+        .media-glow {
+            position: absolute;
+            inset: -1px;
+            border-radius: 1rem;
+            background: radial-gradient(circle at top left, rgba(99,102,241,0.3), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .mask-fade-bottom {
+            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+
+        input[type="range"] {
+            accent-color: #6366f1;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useCallback, useRef } = React;
+        
+        // ==========================================
+        // SECTION 1: GLOBAL CONFIGURATION & CONSTANTS
+        // ==========================================
+        
+        const SUPABASE_URL = "https://ugllcdapuzihpkgcoaxj.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbGxjZGFwdXppaHBrZ2NvYXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTA3NzksImV4cCI6MjA4NjA2Njc3OX0.73I1cW1fqRUha5_6spK7C8m-SXUHQQfyjmcbNNbdfCI";
+        
+        // 3. Supabase Client Global Access Risk - Safe Version
+        const mockSupabase = {
+            from: () => ({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null }) }) }), upsert: () => Promise.resolve(), delete: () => ({ eq: () => ({ eq: () => Promise.resolve() }) }) }),
+            auth: { getUser: () => Promise.resolve({ data: { user: null } }), getSession: () => Promise.resolve({ data: { session: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }), signInWithPassword: () => Promise.resolve({ error: { message: "Supabase client not loaded." } }), signOut: () => Promise.resolve() }
+        };
+        const supabase = (window.supabase && window.supabase.createClient) 
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
+            : mockSupabase;
+
+        const ADMIN_IDS = ["74e5b3ea-113f-4d6c-be2a-b0b52b2e92c3"];
+        const DEFAULT_KEYS = { omdb: '5591108c', tmdb: '68b27c1f85725736f0aec18b903197b0', rapid: '9782bOaf7fmsh8b54c22e5cOaf5cp13e6e8jsn8e2e765657a5' };
+        const RAPID_HOST_MDL = 'mydramalist-api.p.rapidapi.com';
+        const MDL_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+        const VIEWS = {
+            LIBRARY: 'library',
+            MOVIES: 'movies',
+            SERIES: 'series',
+            PROFILE: 'profile'
+        };
+
+        const ASIAN_SOURCES = {
+            MDL: 'mdl',
+            MAL: 'mal'
+        };
+
+        // Cache Configuration
+        const CACHE_CONFIG = {
+            VERSION: 'v1',
+            TTL_MS: 30 * 24 * 60 * 60 * 1000, // 30 days
+            PREFIX: 'cinestat_cache:',
+            MAX_ENTRIES: 500
+        };
+
+        const EAST_SE_ASIA_COUNTRIES = [
+            'japan', 'south korea', 'north korea', 'korea',
+            'china', 'hong kong', 'taiwan',
+            'thailand', 'vietnam', 'philippines',
+            'malaysia', 'indonesia', 'singapore'
+        ];
+        const EAST_SE_ASIA_LANGUAGES = [
+            'japanese', 'korean',
+            'mandarin', 'cantonese', 'chinese',
+            'thai', 'vietnamese',
+            'malay', 'indonesian'
+        ];
+        const WESTERN_COUNTRIES = [
+            'united states', 'usa', 'canada',
+            'united kingdom', 'uk', 'england',
+            'france', 'germany', 'spain',
+            'australia'
+        ];
+        const WESTERN_LANGUAGES = [
+            'english', 'french', 'spanish',
+            'german', 'italian', 'portuguese'
+        ];
+
+        // ==========================================
+        // SECTION 2: CORE UTILITIES (Framework Agnostic)
+        // ==========================================
+
+        const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const now = () => Date.now();
+        const isAdminUser = (user) => {
+            if (!user || !user.id) return false;
+            return ADMIN_IDS.includes(user.id);
+        };
+
+        async function safeFetch(url, options = {}, retries = 2) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    return { error: true, status: res.status };
+                }
+                return await res.json();
+            } catch (e) {
+                if (retries > 0) {
+                     await new Promise(r => setTimeout(r, 400 * (3 - retries)));
+                     return safeFetch(url, options, retries - 1);
+                }
+                return { error: true, status: 'network_error' };
+            }
+        }
+
+        function humanizeReason(reason) {
+            if (reason === 'exact-title') return 'Exact title match';
+            if (reason.startsWith('fuzzy'))
+                return `Title similarity ${reason.match(/\d+/)?.[0]}%`;
+            if (reason === 'exact-year') return 'Exact release year';
+            if (reason === 'near-year') return 'Close release year';
+            if (reason.startsWith('popularity'))
+                return 'Popular title';
+            if (reason.includes('tmdb')) return 'Trusted source (TMDB)';
+            if (reason.includes('tvmaze')) return 'Trusted source (TVMaze)';
+            return reason;
+        }
+
+        const getHighResPoster = (url, width = 600) => {
+            if (!url || url === "N/A") return "https://via.placeholder.com/300x450?text=No+Poster";
+            if (url.includes("media-amazon.com")) return url.replace(/_V1_.*\.jpg$/, `_V1_SX${width}.jpg`);
+            if (url.includes("tmdb.org")) return url.replace(/\/w\d+\//, width > 700 ? "/original/" : `/w${width}/`);
+            return url;
+        };
+
+        const tmdbImg = (path, size = "w780") => path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
+        const formatCurrency = (val) => val ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val) : 'N/A';
+        const hashString = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0; 
+            }
+            return Math.abs(hash).toString(16);
+        };
+
+        // ==========================================
+        // SECTION 3: CACHING & STORAGE SYSTEM
+        // ==========================================
+
+        function createStorage() {
+            try {
+                const k = '__test__';
+                localStorage.setItem(k, '1');
+                localStorage.removeItem(k);
+                return {
+                    get: k => localStorage.getItem(k),
+                    set: (k, v) => localStorage.setItem(k, v),
+                    remove: k => localStorage.removeItem(k),
+                    keys: () => Object.keys(localStorage)
+                };
+            } catch {
+                const mem = new Map();
+                return {
+                    get: k => mem.get(k) || null,
+                    set: (k, v) => mem.set(k, v),
+                    remove: k => mem.delete(k),
+                    keys: () => Array.from(mem.keys())
+                };
+            }
+        }
+
+        const storage = createStorage();
+
+        // 7. Cache Size Check Bug Fix
+        function enforceCacheSize() {
+            const keys = storage.keys().filter(k => k.startsWith(CACHE_CONFIG.PREFIX));
+            if (keys.length <= CACHE_CONFIG.MAX_ENTRIES) return;
+
+            const entries = keys.map(k => {
+                try {
+                    const e = JSON.parse(storage.get(k));
+                    return { key: k, lastAccessed: e?.lastAccessed || 0 };
+                } catch {
+                    return { key: k, lastAccessed: 0 };
+                }
+            }).sort((a, b) => a.lastAccessed - b.lastAccessed);
+
+            const overflow = entries.length - CACHE_CONFIG.MAX_ENTRIES;
+            for (let i = 0; i < overflow; i++) {
+                storage.remove(entries[i].key);
+            }
+        }
+
+        function cacheSet(key, value) {
+            const entry = {
+                v: CACHE_CONFIG.VERSION,
+                value,
+                expiresAt: now() + CACHE_CONFIG.TTL_MS,
+                lastAccessed: now()
+            };
+            storage.set(CACHE_CONFIG.PREFIX + key, JSON.stringify(entry));
+            // 7. Correct cache size check trigger
+            const cacheKeys = storage.keys().filter(k => k.startsWith(CACHE_CONFIG.PREFIX));
+            if (cacheKeys.length > CACHE_CONFIG.MAX_ENTRIES) {
+                enforceCacheSize();
+            }
+        }
+
+        function cacheGet(key) {
+            const raw = storage.get(CACHE_CONFIG.PREFIX + key);
+            if (!raw) return null;
+            try {
+                const entry = JSON.parse(raw);
+                if (entry.v !== CACHE_CONFIG.VERSION || now() > entry.expiresAt) {
+                    storage.remove(CACHE_CONFIG.PREFIX + key);
+                    return null;
+                }
+                entry.expiresAt = now() + CACHE_CONFIG.TTL_MS;
+                entry.lastAccessed = now();
+                storage.set(CACHE_CONFIG.PREFIX + key, JSON.stringify(entry));
+                return entry.value;
+            } catch {
+                storage.remove(CACHE_CONFIG.PREFIX + key);
+                return null;
+            }
+        }
+
+        function cacheDelete(key) { storage.remove(CACHE_CONFIG.PREFIX + key); }
+        function clearAllCache() { storage.keys().filter(k => k.startsWith(CACHE_CONFIG.PREFIX)).forEach(k => storage.remove(k)); }
+        
+        function evictExpiredEntries() {
+            for (const key of storage.keys()) {
+                if (!key.startsWith(CACHE_CONFIG.PREFIX)) continue;
+                try {
+                    const entry = JSON.parse(storage.get(key));
+                    if (!entry || entry.v !== CACHE_CONFIG.VERSION || now() > entry.expiresAt) {
+                        storage.remove(key);
+                    }
+                } catch {
+                    storage.remove(key);
+                }
+            }
+        }
+
+        function getCacheStats() {
+            const keys = storage.keys().filter(k => k.startsWith(CACHE_CONFIG.PREFIX));
+            let expired = 0;
+            for (const k of keys) {
+                try {
+                    const e = JSON.parse(storage.get(k));
+                    if (!e || now() > e.expiresAt) expired++;
+                } catch {
+                    expired++;
+                }
+            }
+            return {
+                totalEntries: keys.length,
+                expiredEntries: expired,
+                maxEntries: CACHE_CONFIG.MAX_ENTRIES
+            };
+        }
+
+        // Initialize Cache
+        evictExpiredEntries();
+
+        function useCacheStats() {
+            const [stats, setStats] = useState(null);
+            useEffect(() => { setStats(getCacheStats()); }, []);
+            return stats;
+        }
+
+        // ==========================================
+        // SECTION 4: LOGIC ENGINES (Business Logic)
+        // ==========================================
+
+        // --- EPISODE PROGRESS ENGINE ---
+        function resolveEpisodeState(episodeId, watchHistory) {
+            const record = watchHistory?.[episodeId];
+            if (!record) return { state: 'unwatched', progress: 0 };
+            if (record.watched === true) return { state: 'watched', progress: 1 };
+            if (typeof record.progress === 'number' && record.progress > 0) return { state: 'partial', progress: record.progress };
+            return { state: 'unwatched', progress: 0 };
+        }
+
+        function calculateEpisodeProgress({ episodes, watchHistory }) {
+            let watchedEpisodes = 0;
+            let lastWatched = null;
+            let nextToWatch = null;
+            let hasGaps = false;
+            let gapDetected = false;
+
+            if (!episodes || !Array.isArray(episodes)) return null;
+
+            for (const ep of episodes) {
+                const state = resolveEpisodeState(ep.id, watchHistory);
+                if (state.state === 'watched') {
+                    watchedEpisodes++;
+                    lastWatched = { episodeId: ep.id, season: ep.season, episode: ep.episode };
+                } else {
+                    if (watchedEpisodes > 0 && !gapDetected) {
+                        hasGaps = true;
+                        gapDetected = true;
+                    }
+                    if (!nextToWatch) {
+                        nextToWatch = { episodeId: ep.id, season: ep.season, episode: ep.episode };
+                    }
+                }
+            }
+
+            const totalEpisodes = episodes.length;
+            const completionPercent = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
+
+            return { watchedEpisodes, totalEpisodes, completionPercent, lastWatched, nextToWatch, isCompleted: watchedEpisodes === totalEpisodes, hasGaps };
+        }
+
+        function detectSeasonGaps({ episodes, watchHistory }) {
+            const seasons = {};
+            for (const ep of episodes) {
+                const state = resolveEpisodeState(ep.id, watchHistory);
+                // 5. Fix optional chaining assignment
+                if (!seasons[ep.season]) {
+                    seasons[ep.season] = { season: ep.season, watched: 0, skipped: 0, total: 0 };
+                }
+                seasons[ep.season].total++;
+                if (state.state === 'watched') seasons[ep.season].watched++;
+                else seasons[ep.season].skipped++;
+            }
+            return Object.values(seasons).filter(s => s.watched > 0 && s.skipped > 0).sort((a, b) => a.season - b.season);
+        }
+
+        function getResumeTarget({ episodes, watchHistory }) {
+            if (!episodes || !Array.isArray(episodes)) return null;
+            for (const ep of episodes) {
+                const state = resolveEpisodeState(ep.id, watchHistory);
+                if (state.state === 'partial') return { episodeId: ep.id, season: ep.season, episode: ep.episode, resumeFrom: state.progress };
+                if (state.state === 'unwatched') return { episodeId: ep.id, season: ep.season, episode: ep.episode, resumeFrom: 0 };
+            }
+            return null; 
+        }
+
+        function calculateSeasonProgress({ episodes, watchHistory }) {
+            if (!episodes || !Array.isArray(episodes)) return [];
+            const seasons = {};
+            for (const ep of episodes) {
+                if (!seasons[ep.season]) {
+                    seasons[ep.season] = { season: ep.season, watched: 0, partial: 0, total: 0 };
+                }
+                const state = resolveEpisodeState(ep.id, watchHistory);
+                seasons[ep.season].total++;
+                if (state.state === 'watched') seasons[ep.season].watched++;
+                if (state.state === 'partial') seasons[ep.season].partial++;
+            }
+            return Object.values(seasons).map(s => ({ ...s, completionPercent: s.total ? Math.round((s.watched / s.total) * 100) : 0 }));
+        }
+
+        // --- WEIGHTED RATING ENGINE ---
+        function extractUserRatings(item) {
+            if (!item.userMeta?.ratings) return [];
+            return Object.values(item.userMeta.ratings)
+                .filter(r => typeof r.rating === 'number' && typeof r.minutesWatched === 'number')
+                .map(r => ({ imdbID: item.imdbID, rating: r.rating, minutesWatched: r.minutesWatched }));
+        }
+
+        function ratingConfidence(minutesWatched, minMinutes = 20) {
+            if (minutesWatched < minMinutes) return 0;
+            return Math.min(1, Math.log1p(minutesWatched) / Math.log1p(300));
+        }
+
+        function timeWeight(minutesWatched) { return Math.log1p(minutesWatched); }
+
+        function calculateWeightedRating(ratings, options = {}) {
+            const { minMinutes = 20, maxMinutesCap = null } = options;
+            let weightedSum = 0, totalWeight = 0, contributingItems = 0;
+            const breakdown = [];
+
+            for (const r of ratings) {
+                if (typeof r.rating !== 'number' || r.rating < 1 || r.rating > 10 || typeof r.minutesWatched !== 'number' || r.minutesWatched <= 0) continue;
+                let minutes = r.minutesWatched;
+                if (maxMinutesCap) minutes = Math.min(minutes, maxMinutesCap);
+                const confidence = ratingConfidence(minutes, minMinutes);
+                if (confidence === 0) continue;
+                const weight = timeWeight(minutes) * confidence;
+                const contribution = r.rating * weight;
+                weightedSum += contribution;
+                totalWeight += weight;
+                contributingItems++;
+                breakdown.push({ imdbID: r.imdbID, rating: r.rating, minutesWatched: minutes, confidence: Number(confidence.toFixed(2)), weight: Number(weight.toFixed(2)), contribution: Number(contribution.toFixed(2)) });
+            }
+
+            if (totalWeight === 0) return { weightedRating: 0, contributingItems: 0, breakdown: [] };
+            return { weightedRating: Number((weightedSum / totalWeight).toFixed(2)), contributingItems, breakdown };
+        }
+
+        // --- GENRE INTELLIGENCE ENGINE ---
+        function extractGenres(genres) {
+            if (!genres) return [];
+            if (Array.isArray(genres)) return genres.map(g => g.toLowerCase().trim()).filter(Boolean);
+            if (typeof genres === 'string') return genres.split(',').map(g => g.toLowerCase().trim()).filter(Boolean);
+            return [];
+        }
+
+        function recencyWeight(lastWatchedAt, halfLifeDays = 180) {
+            if (!lastWatchedAt) return 1;
+            const ageDays = (Date.now() - lastWatchedAt) / (1000 * 60 * 60 * 24);
+            return Math.exp(-ageDays / halfLifeDays);
+        }
+
+        function calculateFractionalGenreDistribution(items, options = {}) {
+            const { useRecency = false, recencyHalfLifeDays = 180 } = options;
+            const distribution = {};
+            let totalWeight = 0;
+
+            for (const item of items) {
+                const genres = extractGenres(item.genres);
+                if (genres.length === 0) continue;
+                const baseWeight = timeWeight(item.minutesWatched);
+                if (baseWeight === 0) continue;
+                const recency = useRecency ? recencyWeight(item.lastWatchedAt, recencyHalfLifeDays) : 1;
+                const weight = baseWeight * recency;
+                const fractional = weight / genres.length;
+                totalWeight += weight;
+                for (const genre of genres) {
+                    if (!distribution[genre]) distribution[genre] = 0;
+                    distribution[genre] += fractional;
+                }
+            }
+            return { distribution, totalWeight };
+        }
+
+        function normalizeGenreDistribution(distribution) {
+            const total = Object.values(distribution).reduce((sum, v) => sum + v, 0);
+            if (total === 0) return {};
+            const normalized = {};
+            for (const [genre, value] of Object.entries(distribution)) {
+                normalized[genre] = Number(((value / total) * 100).toFixed(2));
+            }
+            return normalized;
+        }
+
+        function getGenreProfile(items, options = {}) {
+            const { distribution, totalWeight } = calculateFractionalGenreDistribution(items, options);
+            return { raw: distribution, percent: normalizeGenreDistribution(distribution), totalWeight };
+        }
+
+        function extractGenreItems(items) {
+            return items
+                .filter(i => typeof i.minutesWatched === 'number' && i.minutesWatched > 0 && i.Genre)
+                .map(i => ({ genres: i.Genre, minutesWatched: i.minutesWatched, lastWatchedAt: i.userMeta?.lastWatchedAt }));
+        }
+
+        function genreAffinityScore(item, preferredGenres) {
+            const itemGenres = extractGenres(item.Genre);
+            if (!itemGenres.length) return 0;
+            return itemGenres.reduce((score, g) => score + (preferredGenres.includes(g) ? 1 : 0), 0);
+        }
+
+        // --- ACTOR POPULARITY ENGINE ---
+        function buildProgressMap(items) {
+            const map = {};
+            items.forEach(item => {
+                if (!item.imdbID) return;
+                const minutes = item.minutesWatched ?? item.userMeta?.minutesWatched ?? 0;
+                map[item.imdbID] = {
+                    watchedEpisodes: item.userMeta?.watchedEpisodes,
+                    totalEpisodes: item.userMeta?.totalEpisodes,
+                    isCompleted: item.userMeta?.status === 'watched',
+                    minutesWatched: minutes
+                };
+            });
+            return map;
+        }
+
+        function extractActorItems(items) {
+            return items.filter(i => Array.isArray(i.meta?.cast) && i.meta.cast.length > 0 && (typeof i.minutesWatched === 'number' || typeof i.userMeta?.minutesWatched === 'number'));
+        }
+
+        function normalizeActor(name) { return name.toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+        function completionWeight(progress) {
+            if (!progress) return 0;
+            if (progress.isCompleted === true) return 1;
+            if (typeof progress.watchedEpisodes === 'number' && typeof progress.totalEpisodes === 'number' && progress.totalEpisodes > 0) {
+                const ratio = progress.watchedEpisodes / progress.totalEpisodes;
+                return Math.pow(ratio, 0.7);
+            }
+            return 0;
+        }
+
+        function roleWeight(order) {
+            if (order === undefined || order === null) return 1;
+            if (order === 0) return 1.5;
+            if (order <= 3) return 1.2;
+            if (order <= 10) return 1;
+            return 0.6;
+        }
+
+        function calculateActorPopularity({ items, progressMap }) {
+            const actorScores = {};
+            for (const item of items) {
+                const progress = progressMap[item.imdbID];
+                const cast = item.meta?.cast || item.cast || [];
+                if (!progress || !Array.isArray(cast)) continue;
+                const minutes = progress.minutesWatched ?? 0;
+                if (minutes === 0) continue;
+                const completion = completionWeight(progress);
+                if (completion === 0) continue;
+                const time = timeWeight(minutes);
+                if (time === 0) continue;
+                const itemWeight = completion * time;
+                for (const actor of cast) {
+                    const key = normalizeActor(actor.name);
+                    const rWeight = roleWeight(actor.order);
+                    if (!actorScores[key]) actorScores[key] = 0;
+                    actorScores[key] += itemWeight * rWeight;
+                }
+            }
+            return actorScores;
+        }
+
+        function normalizeActorPopularity(actorScores) {
+            const total = Object.values(actorScores).reduce((sum, v) => sum + v, 0);
+            if (total === 0) return {};
+            const normalized = {};
+            for (const [actor, score] of Object.entries(actorScores)) {
+                normalized[actor] = Number(((score / total) * 100).toFixed(2));
+            }
+            return normalized;
+        }
+
+        function getActorPopularityProfile({ items, progressMap }) {
+            const raw = calculateActorPopularity({ items, progressMap });
+            return { raw, percent: normalizeActorPopularity(raw) };
+        }
+
+        function actorAffinityScore(item, favoriteActors) {
+            if (!Array.isArray(item.meta?.cast)) return 0;
+            return item.meta.cast.reduce((score, actor) => {
+                const name = normalizeActor(actor.name);
+                if (!favoriteActors.includes(name)) return score;
+                if (actor.order === 0) return score + 2;
+                if (actor.order <= 3) return score + 1;
+                return score + 0.5;
+            }, 0);
+        }
+
+        // --- SEARCH & CANONICALIZATION ENGINE ---
+        function normalizeQuery(query) {
+            if (!query) return '';
+            return query.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\b(the|a|an)\b/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function canonicalizeQuery(query) { return normalizeQuery(query).split(' ').filter(Boolean).sort().join(' '); }
+
+        function normalizeType(type) {
+            if (!type) return '';
+            const t = type.toLowerCase();
+            if (t === 'tv' || t === 'series' || t === 'show') return 'series';
+            if (t === 'movie' || t === 'film') return 'movie';
+            if (t === 'anime') return 'anime';
+            return t;
+        }
+
+        function normalizeYear(year) {
+            if (!year) return '';
+            const y = String(year).trim();
+            return /^\d{4}$/.test(y) ? y : '';
+        }
+
+        function buildStableCacheKey({ type, query, year }) {
+            const version = 'v2';
+            const t = normalizeType(type);
+            const q = canonicalizeQuery(query);
+            const y = normalizeYear(year);
+            const semanticKey = `${t}|${q}|${y}`;
+            const hash = hashString(semanticKey);
+            return [version, t, q, y, hash].join('|');
+        }
+
+        function normalizeTitle(str) { return (str || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim(); }
+        function tokenize(title) { return normalizeTitle(title).split(/\s+/).filter(Boolean); }
+        
+        function tokenSimilarity(a, b) {
+            const A = new Set(tokenize(a));
+            const B = new Set(tokenize(b));
+            if (A.size === 0 || B.size === 0) return 0;
+            let intersection = 0;
+            for (const t of A) if (B.has(t)) intersection++;
+            return intersection / Math.max(A.size, B.size);
+        }
+
+        function extractYear(item) {
+            return (
+                item.Year || item.year || item.release_date?.slice(0, 4) || item.first_air_date?.slice(0, 4) || item.premiered?.slice(0, 4) || null
+            );
+        }
+
+        function extractPopularity(item, index) {
+            if (typeof item.popularity === 'number') return item.popularity;
+            if (typeof item.imdbVotes === 'string') {
+                return parseInt(item.imdbVotes.replace(/,/g, ''), 10) || 0;
+            }
+            return Math.max(0, 100 - index);
+        }
+
+        function scoreCandidate({ item, query, targetYear, titleKey = 'title', index }) {
+            let score = 0;
+            const reasons = [];
+            const queryNorm = normalizeTitle(query);
+            const title = item[titleKey] || '';
+            const titleNorm = normalizeTitle(title);
+            const year = extractYear(item);
+
+            if (titleNorm === queryNorm) { score += 50; reasons.push('exact-title'); }
+            const similarity = tokenSimilarity(title, query);
+            if (similarity > 0) {
+                const fuzzyScore = Math.round(similarity * 35);
+                score += fuzzyScore;
+                reasons.push(`fuzzy(${fuzzyScore})`);
+            }
+            if (targetYear && year) {
+                if (year == targetYear) { score += 25; reasons.push('exact-year'); }
+                else if (Math.abs(year - targetYear) === 1) { score += 15; reasons.push('near-year'); }
+            }
+            const pop = extractPopularity(item, index);
+            if (pop > 0) {
+                const popScore = Math.min(10, Math.round(pop / 100));
+                score += popScore;
+                reasons.push(`popularity(${popScore})`);
+            }
+            if (item.source === 'tvmaze') score += 5;
+            if (item.source === 'tmdb') { score += 5; reasons.push('source(tmdb)'); }
+            return { item, score, reasons };
+        }
+
+        function selectBestCandidateEnhanced({ results, query, year = null, titleKey = 'title', debug = false }) {
+            if (!Array.isArray(results) || results.length === 0) return null;
+            const scored = results.map((item, index) => scoreCandidate({ item, query, targetYear: year, titleKey, index }));
+            scored.sort((a, b) => b.score - a.score);
+            const winner = scored[0];
+            if (debug) {
+                return {
+                    selected: winner.item,
+                    score: winner.score,
+                    reasons: winner.reasons,
+                    ranking: scored.map(s => ({ title: s.item[titleKey], year: extractYear(s.item), score: s.score, reasons: s.reasons }))
+                };
+            }
+            return winner.item;
+        }
+
+        // --- ASIAN REGISTRY & DETECTION ---
+        async function getExternalMapping(imdbID, supabase) {
+            const { data } = await supabase.from('imdb_external_map').select('source, source_id').eq('imdb_id', imdbID).single();
+            return data || null;
+        }
+
+        async function getRegistryEntry(source, sourceId, supabase) {
+            const { data } = await supabase.from('asian_external_registry').select('*').eq('source', source).eq('source_id', sourceId).single();
+            return data || null;
+        }
+
+        async function adminUpsertRegistry(entry, isAdmin, supabase) {
+            if (!isAdmin) { console.warn("Registry override blocked: non-admin"); return; }
+            await supabase.from('asian_external_registry').upsert({ ...entry, updated_at: new Date(), overridden_by: 'admin' });
+        }
+
+        async function adminPersistIMDbMapping(imdbID, source, sourceId, isAdmin, supabase) {
+            if (!isAdmin) return;
+            await supabase.from('imdb_external_map').upsert({ imdb_id: imdbID, source, source_id: sourceId, updated_at: new Date() });
+        }
+
+        async function fetchMDLDetail(id, apiKey) {
+            return safeFetch(`https://${RAPID_HOST_MDL}/title/${id}`, { headers: { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': RAPID_HOST_MDL } });
+        }
+
+        async function resolveMDLExternally(title, apiKey) {
+            if (!apiKey) return null;
+            const search = await searchMDL(title, apiKey);
+            const found = search?.results?.[0];
+            if (!found || found.error) return null;
+            const detail = await fetchMDLDetail(found.id, apiKey);
+            if (!detail || detail.error) return null;
+            return { source_id: found.id, title: detail.title, rating: detail.score, votes: detail.votes, payload: detail };
+        }
+
+        async function resolveMALExternally(title) {
+            const res = await searchJikan(title);
+            if (!res || res.error) return null;
+            const anime = res.data?.[0];
+            if (!anime) return null;
+            return { source_id: anime.mal_id, title: anime.title, rating: anime.score, votes: anime.scored_by, payload: anime };
+        }
+
+        async function resolveAsianRegistry({ imdbID, title, preferredSource, supabase, apiKeys, isAdmin }) {
+            if (!imdbID || !title) return null;
+            try {
+                const mapping = await getExternalMapping(imdbID, supabase);
+                if (mapping?.overridden_by === 'admin') {
+                    const cached = await getRegistryEntry(mapping.source, mapping.source_id, supabase);
+                    if (cached) return { ...cached.payload, _registry_source: 'cache' };
+                }
+                if (mapping && mapping.source === preferredSource) {
+                    const cached = await getRegistryEntry(mapping.source, mapping.source_id, supabase);
+                    if (cached) return { ...cached.payload, _registry_source: 'cache' };
+                }
+            } catch(e) {}
+
+            let resolved = null;
+            if (preferredSource === ASIAN_SOURCES.MDL) { resolved = await resolveMDLExternally(title, apiKeys.rapid); }
+            if (preferredSource === ASIAN_SOURCES.MAL) { resolved = await resolveMALExternally(title); }
+            if (!resolved) return null;
+
+            try {
+                if (isAdmin) {
+                    await adminUpsertRegistry({ source: preferredSource, source_id: resolved.source_id, payload: resolved }, isAdmin, supabase);
+                    await adminPersistIMDbMapping(imdbID, preferredSource, resolved.source_id, isAdmin, supabase);
+                }
+            } catch (e) { console.warn("Registry Persist Failed", e); }
+
+            return { id: resolved.source_id, title: resolved.title, rating: resolved.rating, votes: resolved.votes, raw: resolved.payload, source: preferredSource, _registry_source: 'api' };
+        }
+
+        function normalizeOrigin(str) { return (str || '').toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim(); }
+        function containsAny(haystack, needles) { return needles.some(term => haystack.includes(term)); }
+
+        function scoreAsianOrigin({ Country, Language, Genre }) {
+            const country = normalizeOrigin(Country);
+            const language = normalizeOrigin(Language);
+            const genre = normalizeOrigin(Genre);
+            const blob = `${country} ${language}`;
+            let score = 0;
+            const reasons = [];
+
+            if (containsAny(country, EAST_SE_ASIA_COUNTRIES)) { score += 50; reasons.push('asian-country'); }
+            if (containsAny(language, EAST_SE_ASIA_LANGUAGES)) { score += 40; reasons.push('asian-language'); }
+            if (/drama|anime/.test(genre)) { score += 10; reasons.push('genre-hint'); }
+            if (containsAny(country, WESTERN_COUNTRIES)) { score -= 60; reasons.push('western-country'); }
+            if (containsAny(language, WESTERN_LANGUAGES)) { score -= 40; reasons.push('western-language'); }
+            if (/animation/.test(genre)) {
+                if (containsAny(blob, WESTERN_COUNTRIES) || containsAny(blob, WESTERN_LANGUAGES)) {
+                    score -= 50;
+                    reasons.push('western-animation-block');
+                }
+            }
+            return { score, reasons };
+        }
+
+        function detectAsianOrigin(item, options = {}) {
+            const { threshold = 50, debug = false } = options;
+            const { score, reasons } = scoreAsianOrigin(item);
+            const isAsian = score >= threshold;
+            if (debug) return { isAsian, score, reasons };
+            return isAsian;
+        }
+
+        // --- ENRICHMENT PIPELINE ---
+        function classifyForEnrichment(item) {
+            return {
+                isSeries: item.Type === 'series',
+                isAnimation: /Animation/i.test(item.Genre || ''),
+                isAsian: detectAsianOrigin(item)
+            };
+        }
+
+        async function enrichAnime(item, ctx, supabase, isAdmin) {
+            if (!ctx.isAnimation || item.meta?.anime) return null;
+            const anime = await resolveAsianRegistry({ imdbID: item.imdbID, title: item.Title, preferredSource: ASIAN_SOURCES.MAL, supabase, apiKeys: {}, isAdmin });
+            if (!anime) return null;
+            return { anime: { malId: anime.id || anime.mal_id, score: anime.score, studios: anime.studios?.map(s => s.name) || [], confidence: 0.9 } };
+        }
+
+        async function enrichTVMaze(item, ctx) {
+            if (!ctx.isSeries || item.meta?.tvmaze) return null;
+            const cacheKey = `tvmaze_${item.imdbID}`;
+            const cached = cacheGet(cacheKey);
+            if (cached) return { ...cached, _fromCache: true };
+            const show = await safeFetch(`https://api.tvmaze.com/lookup/shows?imdb=${item.imdbID}`);
+            if (!show || show.error) return null;
+            const [episodes, cast] = await Promise.all([
+                safeFetch(`https://api.tvmaze.com/shows/${show.id}/episodes`),
+                safeFetch(`https://api.tvmaze.com/shows/${show.id}/cast`)
+            ]);
+            const result = { tvmaze: { id: show.id, episodes: episodes.error ? [] : episodes, cast: cast.error ? [] : cast, confidence: 0.95 } };
+            cacheSet(cacheKey, result);
+            return { ...result, _fromCache: false };
+        }
+
+        async function resolveMDL(item, ctx, supabase, apiKeys, isAdmin) {
+            if (!ctx.isAsian || item.meta?.asian) return null;
+            const mdl = await resolveAsianRegistry({ imdbID: item.imdbID, title: item.Title, preferredSource: ASIAN_SOURCES.MDL, supabase, apiKeys, isAdmin });
+            if (!mdl) return null;
+            return { asian: { mdl: { id: mdl.id, title: mdl.title, rating: mdl.score || mdl.rating, votes: mdl.votes, url: `https://mydramalist.com/${mdl.id}`, confidence: 0.9 } } };
+        }
+
+        async function enrichTMDB(item, ctx, apiKeys) {
+            if (!apiKeys.tmdb) return null;
+            let tmdbId = item.tmdb?.id;
+            let tmdbData = null;
+            const cacheKey = `tmdb_enrich_${item.imdbID}`;
+            const cached = cacheGet(cacheKey);
+            if (cached) return { ...cached, _fromCache: true };
+
+            if (!tmdbId) {
+                const find = await safeFetch(`https://api.themoviedb.org/3/find/${item.imdbID}?api_key=${apiKeys.tmdb}&external_source=imdb_id`);
+                if (find && !find.error) {
+                    tmdbData = ctx.isSeries ? find?.tv_results?.[0] : find?.movie_results?.[0];
+                    if (tmdbData) tmdbId = tmdbData.id;
+                }
+            }
+            if (!tmdbId) return null;
+
+            const [credits, details, images] = await Promise.all([
+                safeFetch(`https://api.themoviedb.org/3/${ctx.isSeries ? 'tv' : 'movie'}/${tmdbId}/credits?api_key=${apiKeys.tmdb}`),
+                ctx.isSeries ? safeFetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${apiKeys.tmdb}`) : null,
+                safeFetch(`https://api.themoviedb.org/3/${ctx.isSeries ? 'tv' : 'movie'}/${tmdbId}/images?api_key=${apiKeys.tmdb}`)
+            ]);
+
+            const result = {
+                tmdb: {
+                    id: tmdbId,
+                    cast: credits && !credits.error ? (credits.cast || []) : [],
+                    director: credits && !credits.error ? (credits.crew?.filter(c => c.job === 'Director').map(d => d.name) || []) : [],
+                    seasons: details && !details.error ? details.seasons : null,
+                    credits: { images: { backdrops: images && !images.error ? (images.backdrops || []) : [] } },
+                    confidence: 0.95
+                }
+            };
+            cacheSet(cacheKey, result);
+            return { ...result, _fromCache: false };
+        }
+
+        async function enrichItem(item, apiKeys, supabase, isAdmin) {
+            const ctx = classifyForEnrichment(item);
+            const meta = { ...(item.meta || {}) };
+            let tmdbData = { ...(item.tmdb || {}) }; 
+            const provenance = [];
+            let isInstant = false;
+
+            const stages = [
+                () => enrichAnime(item, ctx, supabase, isAdmin),
+                () => enrichTVMaze(item, ctx),
+                () => resolveMDL(item, ctx, supabase, apiKeys, isAdmin),
+                () => enrichTMDB(item, ctx, apiKeys)
+            ];
+
+            const results = await Promise.allSettled(stages.map(s => s()));
+
+            results.forEach(res => {
+                if (res.status === 'fulfilled' && res.value) {
+                    const result = res.value;
+                    if (result._fromCache) isInstant = true;
+                    if (result.tmdb) { tmdbData = { ...tmdbData, ...result.tmdb }; delete result.tmdb; }
+                    Object.assign(meta, result);
+                    provenance.push(...Object.keys(result));
+                } else if (res.status === 'rejected') {
+                    console.warn("Enrichment stage failed", res.reason);
+                }
+            });
+
+            if (tmdbData.cast) {
+                const newCast = tmdbData.cast.map(c => ({ name: c.name, character: c.character, photo: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null }));
+                const combined = [...(meta.cast || []), ...newCast];
+                const seen = new Set();
+                meta.cast = combined.filter(a => {
+                    const k = normalizeActor(a.name);
+                    if (seen.has(k)) return false;
+                    seen.add(k);
+                    return true;
+                });
+            }
+
+            return { ...item, meta, tmdb: tmdbData, enrichmentSources: provenance, enriched: true, _fromCache: isInstant };
+        }
+
+        // --- SEARCH API WRAPPERS & NORMALIZATION ---
+        async function searchTMDB(query, year, type = 'movie', apiKey) {
+            if (!apiKey) return null;
+            const endpoint = type === 'series' ? 'search/tv' : 'search/movie';
+            let url = `https://api.themoviedb.org/3/${endpoint}?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+            if (year) { url += type === 'series' ? `&first_air_date_year=${year}` : `&year=${year}`; }
+            return safeFetch(url);
+        }
+
+        async function searchTVMaze(query) {
+            const url = `https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`;
+            return safeFetch(url);
+        }
+
+        async function searchOMDB(query, year, type = 'movie', apiKey) {
+            if (!apiKey) return null;
+            let url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}&type=${type === 'series' ? 'series' : 'movie'}`;
+            if (year) url += `&y=${year}`;
+            return safeFetch(url);
+        }
+
+        async function searchJikan(query) {
+            const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=5`;
+            return safeFetch(url);
+        }
+
+        async function searchMDL(query, apiKey) {
+            if (!apiKey) return null;
+            return safeFetch(`https://${RAPID_HOST_MDL}/search/title?q=${encodeURIComponent(query)}`, { headers: { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': RAPID_HOST_MDL } });
+        }
+
+        function normalizeCandidate(raw, source) {
+            let type = 'movie'; 
+            if (source === 'tvmaze' || source === 'jikan' || source === 'mdl') type = 'series';
+            if (source === 'omdb' && raw.Type === 'series') type = 'series';
+            if (source === 'tmdb' && (raw.media_type === 'tv' || raw.first_air_date)) type = 'series';
+
+            return {
+                source,
+                title: raw.title || raw.name || raw.Title,
+                year: raw.premiered?.slice(0, 4) || raw.release_date?.slice(0, 4) || raw.first_air_date?.slice(0, 4) || raw.Year || null,
+                imdbID: raw.externals?.imdb || raw.imdbID || null,
+                tmdbID: source === 'tmdb' ? raw.id : null,
+                plot: raw.summary?.replace(/<[^>]+>/g, '') || raw.overview || raw.Plot || null,
+                poster: raw.image?.original || (raw.poster_path ? `https://image.tmdb.org/t/p/w500${raw.poster_path}` : raw.Poster) || null,
+                type: type,
+                popularity: raw.popularity,
+                imdbVotes: raw.imdbVotes,
+                raw,
+                _sourceMeta: { source, fetchedAt: Date.now() }
+            };
+        }
+
+        function reconcile(candidates) {
+            const clusters = [];
+            const processed = new Set();
+            const imdbMap = {};
+            candidates.forEach((c, idx) => {
+                if (c.imdbID) {
+                    if (!imdbMap[c.imdbID]) imdbMap[c.imdbID] = [];
+                    imdbMap[c.imdbID].push(c);
+                    processed.add(idx);
+                }
+            });
+            Object.values(imdbMap).forEach(cluster => clusters.push(cluster));
+            candidates.forEach((c, idx) => {
+                if (!processed.has(idx)) clusters.push([c]);
+            });
+            return clusters;
+        }
+
+        function mergeBest(cluster) {
+            cluster.sort((a, b) => b.score - a.score);
+            const pick = field => cluster.find(c => c[field])?.[field] || null;
+            const primary = cluster[0];
+            return {
+                Title: pick('title'),
+                Year: pick('year'),
+                imdbID: pick('imdbID'),
+                Type: primary.type,
+                Plot: pick('plot'),
+                Poster: pick('poster'),
+                tmdb: primary.tmdbID ? { id: primary.tmdbID } : null,
+                sourcesUsed: cluster.map(c => c.source),
+                confidence: primary.score,
+                _searchDebug: { score: primary.score, reasons: primary.reasons || [] }
+            };
+        }
+
+        async function smartSearch(query, apiKeys, type = 'all', year = null) {
+            const q = query.trim();
+            const wrappedPromises = [];
+            if (type === 'all' || type === 'movie') wrappedPromises.push(searchTMDB(q, year, 'movie', apiKeys.tmdb).then(v => ({v, s: 'tmdb'})));
+            if (type === 'all' || type === 'series') wrappedPromises.push(searchTMDB(q, year, 'series', apiKeys.tmdb).then(v => ({v, s: 'tmdb'})));
+            if (type === 'all' || type === 'series') wrappedPromises.push(searchTVMaze(q).then(v => ({v, s: 'tvmaze'})));
+            if (type === 'all' || type === 'movie') wrappedPromises.push(searchOMDB(q, year, 'movie', apiKeys.omdb).then(v => ({v, s: 'omdb'})));
+            if (type === 'all' || type === 'series') wrappedPromises.push(searchOMDB(q, year, 'series', apiKeys.omdb).then(v => ({v, s: 'omdb'})));
+            if (type === 'all' || type === 'series') wrappedPromises.push(searchJikan(q).then(v => ({v, s: 'jikan'})));
+            if (type === 'all' || type === 'series') wrappedPromises.push(searchMDL(q, apiKeys.rapid).then(v => ({v, s: 'mdl'})));
+
+            const wrappedResults = await Promise.allSettled(wrappedPromises);
+            const rawCandidates = [];
+            
+            wrappedResults.forEach(res => {
+                if (res.status === 'fulfilled' && res.value?.v && !res.value.v.error) {
+                    const val = res.value.v;
+                    let list = [];
+                    if (res.value.s === 'tmdb') list = val.results || [];
+                    else if (res.value.s === 'tvmaze') list = val.map(v => v.show) || [];
+                    else if (res.value.s === 'omdb') list = val.Search || [];
+                    else if (res.value.s === 'jikan') list = val.data || [];
+                    else if (res.value.s === 'mdl') list = val.results || [];
+                    list.forEach(item => rawCandidates.push(normalizeCandidate(item, res.value.s)));
+                }
+            });
+
+            if (rawCandidates.length === 0) return [];
+            rawCandidates.forEach((c, index) => {
+                const result = scoreCandidate({ item: c, query: q, targetYear: year, titleKey: 'title', index: index });
+                c.score = result.score;
+                c.reasons = result.reasons;
+            });
+
+            const clusters = reconcile(rawCandidates);
+            const mergedResults = clusters.map(cluster => mergeBest(cluster));
+            return mergedResults.sort((a, b) => b.confidence - a.confidence);
+        }
+
+        // ==========================================
+        // SECTION 5: UI PRIMITIVES & COMPONENTS
+        // ==========================================
+
+        const VaultLogo = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+               <g transform="translate(6, 0)"> 
+                    <rect x="0" y="35" width="8" height="30" rx="1" fill="currentColor" />
+                    <rect x="8" y="40" width="6" height="6" fill="currentColor" />
+                    <rect x="8" y="54" width="6" height="6" fill="currentColor" />
+                    <circle cx="55" cy="50" r="37" stroke="currentColor" strokeWidth="5" />
+                    <circle cx="55" cy="50" r="30" stroke="currentColor" strokeWidth="3" strokeDasharray="0.1 15.6" strokeLinecap="round" opacity="0.8" />
+                    <circle cx="55" cy="50" r="22" stroke="currentColor" strokeWidth="3" />
+                    <g transform="translate(55, 50)">
+                        {[0, 60, 120, 180, 240, 300].map(deg => (
+                            <line key={deg} x1="0" y1="-10" x2="0" y2="-22" stroke="currentColor" strokeWidth="4" strokeLinecap="round" transform={`rotate(${deg})`} />
+                        ))}
+                    </g>
+                    <circle cx="55" cy="50" r="10" fill="currentColor" />
+                    <ellipse cx="55" cy="50" rx="3.5" ry="6.5" className="fill-white dark:fill-vault-950" />
+               </g>
+            </svg>
+        );
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                search: <path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />,
+                star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+                play: <path d="M5 3l14 9-14 9V3z" />,
+                clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
+                grid: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></>,
+                list: <><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>,
+                settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></>,
+                close: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+                user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+                inbox: <><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></>,
+                refresh: <><path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></>,
+                trash: <><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>,
+                check: <polyline points="20 6 9 17 4 12" />,
+                external: <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></>,
+                globe: <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>,
+                trending: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>,
+                filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+                database: <><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></>,
+                youtube: <><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z" /><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" /></>,
+                'alert-circle': <><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></>
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
+        };
+
+        const GlassButton = ({ children, onClick, active, className = "", icon }) => (
+            <button 
+                onClick={onClick}
+                className={`
+                    relative flex items-center gap-2 px-4 py-2 rounded-xl 
+                    transition-all duration-300 font-medium text-sm
+                    backdrop-blur-md
+                    ${active 
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40 scale-[1.02]' 
+                        : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 hover:border-indigo-500/40'}
+                    hover:scale-[1.04] active:scale-95
+                    ${className}
+                `}
+            >
+                {icon && <Icon name={icon} size={16} />}
+                {children}
+            </button>
+        );
+
+        const Badge = ({ children, color = "indigo" }) => {
+            const colors = {
+                indigo: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+                green: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                gold: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                red: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+                slate: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+            };
+            return (
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all duration-300 hover:scale-105 ${colors[color]}`}>
+                    {children}
+                </span>
+            );
+        };
+
+        const MediaCardPoster = ({ item, isSeries, rating, onPlayTrailer, isAdmin, onAdminEdit, resumeTarget, onResume }) => (
+            <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-slate-900 shadow-[0_10px_40px_rgba(0,0,0,0.6)] transition-all duration-700 group-hover:-translate-y-3 group-hover:shadow-[0_20px_60px_rgba(99,102,241,0.35)] group-hover:ring-2 group-hover:ring-indigo-500/40">
+                <div className="media-glow" />
+                <img 
+                    src={getHighResPoster(item.Poster, 400)} 
+                    alt={item.Title}
+                    width="400"
+                    height="600"
+                    loading="lazy"
+                    className="h-full w-full object-cover opacity-85 transition-all duration-1000 ease-out group-hover:scale-110 group-hover:opacity-100"
+                />
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute -inset-[200%] bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12 group-hover:translate-x-[300%] transition-transform duration-1000 ease-out" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-70 group-hover:opacity-90 transition duration-500" />
+                <MediaCardBadges item={item} />
+                <div className="absolute top-3 right-3 flex flex-col gap-2">
+                        <div className="bg-black/70 backdrop-blur-xl text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-white/10 shadow-lg shadow-black/40">
+                        <Icon name="star" size={12} className="text-amber-400 fill-amber-400 drop-shadow" />
+                        {rating || 'N/A'}
+                    </div>
+                </div>
+                <MediaCardHoverActions 
+                    item={item} 
+                    isSeries={isSeries} 
+                    onPlayTrailer={onPlayTrailer} 
+                    isAdmin={isAdmin} 
+                    onAdminEdit={onAdminEdit}
+                    resumeTarget={resumeTarget}
+                    onResume={onResume}
+                />
+            </div>
+        );
+
+        const MediaCardBadges = ({ item }) => (
+            <div className="absolute top-3 left-3 flex flex-col gap-2">
+                {item.userMeta?.status === 'watched' && (
+                    <div className="bg-emerald-500 text-white p-1.5 rounded-lg shadow-lg">
+                        <Icon name="check" size={14} />
+                    </div>
+                )}
+                {item._fromCache && (
+                    <div className="bg-emerald-500/90 text-white p-1.5 rounded-lg shadow-lg" title="Loaded Instantly">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">⚡</span>
+                    </div>
+                )}
+                
+                {item._searchDebug && (
+                    <div className="bg-black/70 backdrop-blur-md text-[10px] text-slate-300 px-2 py-1 rounded-lg">
+                        Score: {item._searchDebug.score}
+                    </div>
+                )}
+            </div>
+        );
+
+        const MediaCardHoverActions = ({ item, isSeries, onPlayTrailer, isAdmin, onAdminEdit, resumeTarget, onResume }) => {
+            const handleTrailer = useCallback((e) => {
+                e.stopPropagation();
+                onPlayTrailer(item);
+            }, [item, onPlayTrailer]);
+
+            const handleAdmin = useCallback((e) => {
+                e.stopPropagation();
+                onAdminEdit(item);
+            }, [item, onAdminEdit]);
+
+            return (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300">
+                        <button 
+                            onClick={handleTrailer}
+                            className="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-full text-white shadow-2xl shadow-indigo-500/40 hover:scale-110 hover:shadow-purple-500/50 transition-all duration-300"
+                            title="Watch Trailer"
+                        >
+                            <Icon name="play" size={28} className="ml-1" />
+                        </button>
+                    </div>
+                    
+                    {isAdmin && (
+                        <div className="absolute bottom-3 right-3 flex gap-2">
+                            <button onClick={handleAdmin} className="p-2 bg-indigo-500/20 rounded-lg hover:bg-indigo-500 text-white">
+                                <Icon name="settings" size={14} />
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* 1. Critical JSX Syntax Error Fix */}
+                    {resumeTarget && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onResume(item, resumeTarget);
+                            }}
+                            className="mt-3 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-300"
+                        >
+                            Resume S{resumeTarget.season} · E{resumeTarget.episode}
+                        </button>
+                    )}
+
+                    <p className="text-white text-xs font-medium line-clamp-2 mb-1">{item.Genre}</p>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-widest">{item.Year} • {isSeries ? 'Series' : 'Movie'}</p>
+                </div>
+            );
+        };
+
+        const MediaCardInfo = ({ item, isSeries, confidence }) => (
+            <div className="px-1">
+                <h3 className="font-bold text-sm text-white tracking-tight line-clamp-1 group-hover:text-indigo-400 transition-colors duration-300">
+                    {item.Title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {item.meta?.asian && <Badge color="green">Asian</Badge>}
+                    {item.meta?.asian?.mdl && <Badge color="green">MDL {item.meta.asian.mdl.rating}</Badge>}
+                    {item.meta?.anime?.score && <Badge color="indigo">MAL {item.meta.anime.score}</Badge>}
+                    {isSeries && <Badge color="slate">{item.meta?.series?.seasons?.length || item.totalSeasons || '?'} Seasons</Badge>}
+                    {confidence && (
+                        <span className="text-[10px] uppercase tracking-wider text-slate-400">
+                            {confidence} confidence
+                        </span>
+                    )}
+                </div>
+            </div>
+        );
+
+        const MediaCard = ({ item, onClick, isAdmin, onAction, onPlayTrailer, onAdminEdit, onResume }) => {
+            const isSeries = item.Type === 'series';
+
+            const weightedRatingData = useMemo(() => {
+                const ratings = extractUserRatings(item);
+                if (ratings.length === 0) return null;
+                return calculateWeightedRating(ratings, { minMinutes: 20, maxMinutesCap: 600 });
+            }, [item]);
+
+            const displayRating = weightedRatingData?.weightedRating ?? item.userMeta?.ratings?.overall ?? item.imdbRating ?? 'N/A';
+            const ratingConfidenceLabel = useMemo(() => {
+                if (!weightedRatingData) return null;
+                const minutes = Math.max(...weightedRatingData.breakdown.map(b => b.minutesWatched));
+                const confidence = ratingConfidence(minutes);
+                if (confidence > 0.75) return 'High';
+                if (confidence > 0.4) return 'Medium';
+                return 'Low';
+            }, [weightedRatingData]);
+
+            const resumeTarget = useMemo(() => {
+                if (item.Type !== 'series' || !item.meta?.tvmaze?.episodes || !item.userMeta?.watchHistory) return null;
+                return getResumeTarget({ episodes: item.meta.tvmaze.episodes, watchHistory: item.userMeta.watchHistory });
+            }, [item]);
+
+            return (
+                <div onClick={onClick} className="group relative flex flex-col gap-3 animate-reveal transition-all duration-500 hover:scale-[1.03] hover:z-20">
+                    <MediaCardPoster item={item} isSeries={isSeries} rating={displayRating} onPlayTrailer={onPlayTrailer} isAdmin={isAdmin} onAdminEdit={onAdminEdit} resumeTarget={resumeTarget} onResume={onResume} />
+                    <MediaCardInfo item={item} isSeries={isSeries} confidence={ratingConfidenceLabel} />
+                </div>
+            );
+        };
+
+        const ContentRail = ({ title, items, onCardClick, icon, emptyMessage }) => {
+            if (!items || items.length === 0) return null;
+            return (
+                <section className="mb-10 animate-reveal">
+                    <h2 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+                        {icon && <Icon name={icon} className="text-emerald-400" />}
+                        {title}
+                    </h2>
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory">
+                        {items.map(item => (
+                            <div key={item.imdbID || item.id} className="snap-start shrink-0">
+                                <MediaCard item={item} isAdmin={false} onClick={() => onCardClick(item)} onPlayTrailer={() => {}} onAdminEdit={() => {}} onResume={() => {}} />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            );
+        };
+
+        const CacheHealthPanel = () => {
+            const stats = useCacheStats();
+            if (!stats) return null;
+            return (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-4">
+                    <h3 className="text-sm font-bold text-white mb-3">Cache Health</h3>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                        <div><p className="text-lg font-black text-white">{stats.totalEntries}</p><p className="text-xs text-slate-400">Entries</p></div>
+                        <div><p className="text-lg font-black text-amber-400">{stats.expiredEntries}</p><p className="text-xs text-slate-400">Expired</p></div>
+                        <div><p className="text-lg font-black text-white">{stats.maxEntries}</p><p className="text-xs text-slate-400">Max</p></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SeasonHeatmap = ({ seasons, onSeasonClick }) => {
+            if (!seasons.length) return null;
+            return (
+                <div className="mb-8">
+                    <h3 className="text-sm font-bold text-slate-300 mb-3 tracking-wide">Season Progress</h3>
+                    <div className="space-y-3">
+                        {seasons.map(s => {
+                            const bingeLevel = s.completionPercent === 100 ? 'complete' : s.completionPercent >= 70 ? 'high' : s.completionPercent >= 30 ? 'medium' : 'low';
+                            return (
+                                <div key={s.season} onClick={() => onSeasonClick?.(s.season)} className="cursor-pointer group">
+                                    <div className="flex justify-between items-center mb-1 text-xs">
+                                        <span className="font-semibold text-slate-300">Season {s.season}</span>
+                                        <span className="text-slate-400">{s.watched}/{s.total}</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                                        <div className={`h-full transition-all duration-700 ${bingeLevel === 'complete' && 'bg-emerald-500'} ${bingeLevel === 'high' && 'bg-indigo-500'} ${bingeLevel === 'medium' && 'bg-amber-500'} ${bingeLevel === 'low' && 'bg-slate-500'}`} style={{ width: `${s.completionPercent}%` }} />
+                                    </div>
+                                    {s.partial > 0 && <p className="text-[10px] text-amber-400 mt-1">{s.partial} episode{ s.partial > 1 ? 's' : '' } in progress</p>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const ProfileStat = ({ label, value }) => (
+            <div className="glass rounded-2xl p-6 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-1 hover:ring-indigo-500/40 group text-center">
+                 <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400 tracking-tight mb-1">{value}</div>
+                 <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">{label}</div>
+            </div>
+        );
+
+        const SectionDivider = () => <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-10" />;
+
+        const EmptyState = ({ message = "No data available." }) => (
+            <div className="glass rounded-2xl p-8 text-center flex flex-col items-center">
+                <Icon name="inbox" className="mb-4 text-slate-500" size={28} />
+                <p className="text-slate-400 font-medium">{message}</p>
+            </div>
+        );
+
+        const ProfileSection = ({ title, children }) => (
+            <section className="mb-12 animate-reveal">
+                <h2 className="text-lg font-black text-white mb-4">{title}</h2>
+                <div className="glass rounded-xl p-6">{children}</div>
+            </section>
+        );
+
+        const GenreBars = ({ data }) => {
+            const entries = Object.entries(data).slice(0, 10);
+            if (entries.length === 0) return <EmptyState />;
+            return (
+                <div className="space-y-3">
+                    {entries.map(([genre, value], index) => (
+                        <div key={genre} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 hover:translate-x-1 group">
+                            <div className="flex-1">
+                                <div className="flex justify-between text-xs text-slate-400 mb-2 font-bold">
+                                    <span className="capitalize flex items-center">
+                                        <span className="text-xs font-bold text-indigo-400 mr-3">#{index + 1}</span>
+                                        <span className="text-slate-200">{genre}</span>
+                                    </span>
+                                    <span className="text-indigo-300">{value}%</span>
+                                </div>
+                                <div className="relative h-2 bg-black/20 rounded-full overflow-hidden">
+                                    <div style={{ width: `${value}%` }} className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.4)]" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const ActorList = ({ data }) => {
+            const entries = Object.entries(data).slice(0, 10);
+            if (entries.length === 0) return <EmptyState />;
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {entries.map(([actor, val], index) => (
+                        <div key={actor} className="flex justify-between items-center px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 hover:translate-x-1 group">
+                            <div className="flex items-center">
+                                <span className="text-xs font-bold text-indigo-400 mr-3">#{index + 1}</span>
+                                <span className="text-slate-300 font-medium truncate pr-2">{actor}</span>
+                            </div>
+                            <span className="text-indigo-400 font-bold text-sm">{val}%</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const ProfileView = ({ user, libraryItems, onBack }) => {
+            const isAdmin = isAdminUser(user);
+            const progressMap = useMemo(() => buildProgressMap(libraryItems), [libraryItems]);
+            const genreProfile = useMemo(() => {
+                const items = extractGenreItems(libraryItems);
+                return getGenreProfile(items, { useRecency: true });
+            }, [libraryItems]);
+            const actorProfile = useMemo(() => getActorPopularityProfile({ items: libraryItems, progressMap }), [libraryItems]);
+
+            const recentlyWatched = useMemo(() => {
+                 return [...libraryItems]
+                    .sort((a, b) => (b.userMeta?.lastUpdated || 0) - (a.userMeta?.lastUpdated || 0))
+                    .slice(0, 4);
+            }, [libraryItems]);
+
+            return (
+                <div className="max-w-6xl mx-auto px-6 py-10 animate-reveal">
+                    {/* Hero Header */}
+                    <div className="profile-hero glass rounded-3xl p-8 mb-10 relative z-10">
+                        <div className="relative z-20 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-6">
+                                <div className="w-24 h-24 rounded-full bg-indigo-600 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-indigo-600/30 ring-4 ring-white/10">
+                                    {user.email?.[0]?.toUpperCase()}
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-black text-white tracking-tight">{user.user_metadata?.name || 'Vault User'}</h1>
+                                    <p className="text-indigo-300 font-medium">{user.email}</p>
+                                    {isAdmin && <div className="mt-3"><Badge color="gold">Admin Access</Badge></div>}
+                                </div>
+                            </div>
+                            <button onClick={onBack} className="self-start md:self-center px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-300 hover:text-white transition-all text-sm font-bold flex items-center gap-2 border border-white/5">
+                                <Icon name="close" size={16} /> Close Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Dashboard Stats */}
+                    <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                        <ProfileStat label="Titles Watched" value={libraryItems.length} />
+                        <ProfileStat label="Genres Tracked" value={Object.keys(genreProfile.percent).length} />
+                        <ProfileStat label="Actors Tracked" value={Object.keys(actorProfile.percent).length} />
+                        <ProfileStat label="System Role" value={isAdmin ? 'Admin' : 'User'} />
+                    </section>
+
+                    <SectionDivider />
+
+                    {/* Analytics Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <ProfileSection title="Genre Affinity">
+                            <GenreBars data={genreProfile.percent} />
+                        </ProfileSection>
+                        <ProfileSection title="Actor Affinity">
+                            <ActorList data={actorProfile.percent} />
+                        </ProfileSection>
+                    </div>
+
+                    <SectionDivider />
+
+                    {/* Recently Watched */}
+                    <section className="animate-reveal">
+                        <h2 className="text-lg font-black text-white mb-6">Recently Active</h2>
+                        {recentlyWatched.length === 0 ? <EmptyState message="No history found." /> : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {recentlyWatched.map(item => (
+                                     <div key={item.imdbID} className="relative rounded-xl overflow-hidden aspect-[2/3] transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-indigo-500/20 group cursor-pointer bg-slate-800">
+                                        <img src={getHighResPoster(item.Poster, 300)} width="300" height="450" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-4">
+                                             <div>
+                                                <p className="text-white font-bold text-sm line-clamp-1">{item.Title}</p>
+                                                <p className="text-indigo-400 text-xs font-medium mt-1">Last updated recently</p>
+                                             </div>
+                                        </div>
+                                     </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+            );
+        };
+
+        const AdminSuggestionsModal = ({ isOpen, onClose, suggestions = [], onApprove, onReject }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-2xl glass rounded-3xl p-8 animate-reveal max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-black text-white">Admin Dashboard</h3>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white"><Icon name="close" /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                            {suggestions.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">No pending suggestions</div>
+                            ) : (
+                                suggestions.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <div><p className="font-bold text-white">{item.title}</p><p className="text-xs text-slate-400 uppercase">{item.type} • {item.user_email}</p></div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => onApprove(item)} className="p-2 bg-emerald-500/20 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all"><Icon name="check" size={18} /></button>
+                                            <button onClick={() => onReject(item)} className="p-2 bg-rose-500/20 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Icon name="trash" size={18} /></button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DetailModal = ({ item, onClose, onUpdateStatus, onRemove, isAdmin, watchHistory, topActors }) => {
+            if (!item) return null;
+
+            const [activeTab, setActiveTab] = useState('overview');
+            const backdrop = tmdbImg(item.tmdb?.credits?.images?.backdrops?.[0]?.file_path, "original") || getHighResPoster(item.Poster, 1000);
+
+            const weightedRatingData = useMemo(() => {
+                const ratings = extractUserRatings(item);
+                if (ratings.length === 0) return null;
+                return calculateWeightedRating(ratings, { minMinutes: 20, maxMinutesCap: 600 });
+            }, [item]);
+
+            const displayRating = weightedRatingData?.weightedRating ?? item.userMeta?.ratings?.overall ?? item.imdbRating ?? 'N/A';
+            
+            const ratingConfidenceLabel = useMemo(() => {
+                if (!weightedRatingData) return null;
+                const minutes = Math.max(...weightedRatingData.breakdown.map(b => b.minutesWatched));
+                const confidence = ratingConfidence(minutes);
+                if (confidence > 0.75) return 'High';
+                if (confidence > 0.4) return 'Medium';
+                return 'Low';
+            }, [weightedRatingData]);
+
+            const episodeProgress = useMemo(() => {
+                const episodes = item.meta?.tvmaze?.episodes || item.meta?.series?.episodes || [];
+                return calculateEpisodeProgress({ episodes, watchHistory });
+            }, [item, watchHistory]);
+
+            const seasonProgress = useMemo(() => {
+                if (!item.meta?.tvmaze?.episodes || !item.userMeta?.watchHistory) return [];
+                return calculateSeasonProgress({ episodes: item.meta.tvmaze.episodes, watchHistory: item.userMeta.watchHistory });
+            }, [item]);
+
+            const gapNudge = useMemo(() => {
+                if (!episodeProgress || !episodeProgress.hasGaps) return null;
+                if (episodeProgress.isCompleted) return null;
+                if (episodeProgress.watchedEpisodes < 3) return null;
+                const gaps = detectSeasonGaps({ episodes: item.meta?.tvmaze?.episodes || item.meta?.series?.episodes || [], watchHistory: watchHistory });
+                if (gaps.length === 0) return null;
+                const s = gaps[0];
+                return { season: s.season, skipped: s.skipped, watched: s.watched };
+            }, [episodeProgress, item, watchHistory]);
+
+            const handleCatchUp = () => {
+                const episodes = item.meta?.tvmaze?.episodes || item.meta?.series?.episodes || [];
+                const catchUpTarget = episodes.find(ep => {
+                    const state = resolveEpisodeState(ep.id, watchHistory);
+                    return state.state === 'unwatched';
+                });
+                if (catchUpTarget) {
+                    alert(`Playing Catch Up: ${item.Title} S${catchUpTarget.season}E${catchUpTarget.episode}`);
+                }
+            };
+
+            const scrollToSeason = (seasonNum) => {
+                const el = document.getElementById(`season-${seasonNum}`);
+                if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.open = true; }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in">
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={onClose}></div>
+                    <div className="relative w-full max-w-6xl max-h-full glass rounded-[2rem] overflow-hidden flex flex-col lg:flex-row shadow-2xl border-white/10 animate-reveal">
+                        <div className="relative w-full lg:w-[400px] h-64 lg:h-auto shrink-0 overflow-hidden">
+                            <img src={getHighResPoster(item.Poster, 800)} width="400" height="600" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-vault-950 via-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-vault-950"></div>
+                            <button onClick={onClose} className="lg:hidden absolute top-4 right-4 bg-black/50 p-2 rounded-full text-white"><Icon name="close" /></button>
+                        </div>
+                        <div className="flex-1 flex flex-col overflow-hidden bg-vault-950">
+                            <div className="p-8 pb-4 flex justify-between items-start">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                                        <Badge color="gold">{item.Rated}</Badge>
+                                        <Badge color="slate">{item.Runtime}</Badge>
+                                        <span className="text-slate-400 text-sm font-medium">{item.Year}</span>
+                                        {item._fromCache && <Badge color="green">⚡ Instant</Badge>}
+                                        {isAdmin && item._registry_source === 'cache' && <Badge color="slate">Registry: Cached</Badge>}
+                                        {isAdmin && item._registry_source === 'api' && <Badge color="green">Registry: Fresh</Badge>}
+                                    </div>
+                                    <h1 className="text-3xl lg:text-5xl font-black text-white leading-tight">{item.Title}</h1>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <div className="text-2xl font-black text-white">{displayRating}</div>
+                                        {weightedRatingData && (
+                                            <div className="text-xs text-slate-400">Based on {weightedRatingData.contributingItems} viewing session{weightedRatingData.contributingItems > 1 ? 's' : ''}</div>
+                                        )}
+                                    </div>
+                                    {topActors && topActors.some(a => item.meta?.cast?.some(c => normalizeActor(c.name) === a)) && (
+                                        <div className="mt-3"><Badge color="gold">Features one of your favorite actors</Badge></div>
+                                    )}
+                                    <p className="text-indigo-400 font-bold mt-2 text-sm uppercase tracking-widest">{item.Genre}</p>
+                                    {item.meta?.asian?.mdl && (
+                                        <a href={item.meta.asian.mdl.url} target="_blank" rel="noreferrer" className="mt-2 text-xs text-emerald-400 flex items-center gap-1 font-bold hover:underline">View on MyDramaList <Icon name="external" size={12} /></a>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                    <button onClick={onClose} className="hidden lg:flex bg-white/5 hover:bg-white/10 p-3 rounded-full text-white transition-all"><Icon name="close" /></button>
+                                    {isAdmin && (
+                                        <button onClick={() => alert("Admin Override: Feature Placeholder. This would open the Mapping Editor.")} className="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-xs text-indigo-300 font-bold transition-all">Fix External Mapping</button>
+                                    )}
+                                </div>
+                            </div>
+                            {gapNudge && (
+                                <div className="mx-8 mb-6 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-300 flex items-start gap-3 animate-reveal">
+                                    <Icon name="alert-circle" size={20} className="mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-sm">You skipped {gapNudge.skipped} episode{gapNudge.skipped > 1 ? 's' : ''} in Season {gapNudge.season}</p>
+                                        <p className="text-xs opacity-80 mt-1">Want to catch up before moving ahead?</p>
+                                    </div>
+                                    <button onClick={() => { setActiveTab('seasons'); }} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 transition">View episodes</button>
+                                </div>
+                            )}
+                            <div className="px-8 flex gap-8 border-b border-white/5 overflow-x-auto no-scrollbar">
+                                {['overview', 'details', 'cast', 'seasons'].map(tab => (
+                                    (tab !== 'seasons' || item.Type === 'series') && (
+                                        <button key={tab} onClick={() => setActiveTab(tab)} className={`py-4 text-sm font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>{tab}</button>
+                                    )
+                                ))}
+                            </div>
+                            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+                                {activeTab === 'overview' && (
+                                    <div className="space-y-8 animate-reveal">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="md:col-span-2 space-y-6">
+                                                <div>
+                                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400 mb-3">Synopsis</h3>
+                                                    <p className="text-slate-300 text-lg leading-relaxed">{item.Plot}</p>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="glass p-4 rounded-2xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Director</p><p className="text-white font-bold">{item.Director}</p></div>
+                                                    <div className="glass p-4 rounded-2xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Writer</p><p className="text-white font-bold line-clamp-1">{item.Writer}</p></div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400 mb-3">Ratings</h3>
+                                                <div className="space-y-2">
+                                                    {Object.entries(item.meta?.ratingsExternal || {}).map(([key, val]) => val && (
+                                                        <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                                            <span className="text-xs font-bold text-slate-400 uppercase">{key}</span>
+                                                            <span className="text-sm font-black text-white">{typeof val === 'object' ? val.rating : val}</span>
+                                                        </div>
+                                                    ))}
+                                                    {item.meta?.asian?.mdl && (
+                                                        <div className="flex items-center justify-between p-3 rounded-xl bg-teal-500/10 border border-teal-500/20">
+                                                            <span className="text-xs font-bold text-teal-400 uppercase">MyDramaList</span>
+                                                            <span className="text-sm font-black text-teal-400">{item.meta.asian.mdl.rating}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {weightedRatingData && (
+                                                    <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/5">
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Session Breakdown</h4>
+                                                        
+                                                        <div className="flex items-baseline gap-2 mb-4">
+                                                            <span className="text-4xl font-black text-gradient">
+                                                                {weightedRatingData.weightedRating}
+                                                            </span>
+                                                            <span className="text-slate-400 text-sm">
+                                                                Weighted Score
+                                                            </span>
+                                                            {ratingConfidenceLabel && (
+                                                                <div className="ml-auto">
+                                                                    <Badge color={
+                                                                        ratingConfidenceLabel === "High" ? "green" :
+                                                                        ratingConfidenceLabel === "Medium" ? "gold" :
+                                                                        "red"
+                                                                    }>
+                                                                        {ratingConfidenceLabel} Confidence
+                                                                    </Badge>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <ul className="space-y-2 text-xs text-slate-300">
+                                                            {weightedRatingData.breakdown.map((b, idx) => (
+                                                                <li key={idx} className="flex justify-between items-center p-2 rounded bg-white/5">
+                                                                    <span className="flex items-center gap-1"><Icon name="star" size={10} className="text-amber-400" /> {b.rating}</span>
+                                                                    <span>{b.minutesWatched} min</span>
+                                                                    <span className="text-slate-500">×{b.confidence}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTab === 'details' && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-reveal">
+                                        {[
+                                            { label: 'Language', value: item.Language },
+                                            { label: 'Country', value: item.Country },
+                                            { label: 'Released', value: item.Released },
+                                            { label: 'Box Office', value: item.BoxOffice },
+                                            { label: 'Production', value: item.Production },
+                                            { label: 'Awards', value: item.Awards },
+                                            { label: 'IMDb ID', value: item.imdbID },
+                                            { label: 'Status', value: item.userMeta?.status },
+                                        ].map(stat => (
+                                            <div key={stat.label} className="space-y-1">
+                                                <p className="text-[10px] text-slate-500 uppercase font-black">{stat.label}</p>
+                                                <p className="text-white font-bold text-sm">{stat.value || 'N/A'}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {activeTab === 'cast' && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 animate-reveal">
+                                        {item.meta?.cast?.map(person => (
+                                            <div key={person.name} className="flex flex-col items-center text-center gap-3 group">
+                                                <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-indigo-500/50 transition-all duration-300">
+                                                    <img src={person.photo || `https://ui-avatars.com/api/?name=${person.name}&background=1c2230&color=fff`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-white text-sm font-bold line-clamp-1">{person.name}</p>
+                                                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">{person.character}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {activeTab === 'seasons' && item.meta?.series?.seasons && (
+                                    <div className="space-y-4 animate-reveal">
+                                        <SeasonHeatmap seasons={seasonProgress} onSeasonClick={(season) => { scrollToSeason(season); }} />
+                                        {item.meta.series.seasons.map(season => (
+                                            <details key={season.season} id={`season-${season.season}`} className="group glass rounded-2xl overflow-hidden transition-all duration-300">
+                                                <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-white/5 list-none">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white">S{season.season}</div>
+                                                        <div>
+                                                            <h4 className="text-white font-bold">Season {season.season}</h4>
+                                                            <p className="text-slate-500 text-xs font-medium">{season.episodes?.length || 0} Episodes • {season.airDate}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Icon name="play" size={16} className="text-slate-400 group-open:rotate-90 transition-transform" />
+                                                </summary>
+                                                <div className="px-6 pb-6 pt-2 divide-y divide-white/5">
+                                                    {season.episodes?.map(ep => (
+                                                        <div key={ep.episode} className="py-4 flex items-center justify-between group/ep">
+                                                            <div className="flex gap-4">
+                                                                <span className="text-indigo-400 font-mono text-sm">E{ep.episode}</span>
+                                                                <div>
+                                                                    <p className="text-white text-sm font-bold group-hover/ep:text-indigo-400 transition-colors">{ep.title}</p>
+                                                                    <p className="text-slate-500 text-[10px] font-medium mt-0.5">{ep.airDate}</p>
+                                                                </div>
+                                                            </div>
+                                                            {ep.watched && <Badge color="green">Watched</Badge>}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </details>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-8 pt-4 border-t border-white/5 flex gap-4 bg-vault-950/80 backdrop-blur-md">
+                                <button onClick={() => onUpdateStatus('watched')} className={`flex-1 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${item.userMeta?.status === 'watched' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'}`}><Icon name="check" size={18} />Watched</button>
+                                <button onClick={() => onUpdateStatus('watchlist')} className={`flex-1 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${item.userMeta?.status === 'watchlist' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'}`}><Icon name="clock" size={18} />Watchlist</button>
+                                <button onClick={() => onRemove(item.imdbID)} className="px-6 py-4 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center" title="Remove from Library"><Icon name="trash" size={20} /></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SearchOverlay = ({ isOpen, onClose, query, setQuery, results, onResultClick, isLoading, searchType, setSearchType }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[150] bg-vault-950/95 backdrop-blur-xl animate-fade-in p-4 lg:p-12 overflow-y-auto">
+                    <div className="max-w-4xl mx-auto flex flex-col h-full">
+                        <div className="flex flex-col gap-4 mb-12">
+                            <div className="flex items-center gap-6">
+                                <div className="flex-1 relative group">
+                                    <Icon name="search" className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-500 transition-colors" size={24} />
+                                    <input autoFocus type="text" placeholder="Search Movies, Shows, Anime, or Dramas..." value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-white/5 border-2 border-white/10 focus:border-indigo-500 rounded-3xl py-6 pl-16 pr-8 text-2xl font-bold text-white outline-none transition-all placeholder:text-slate-600" />
+                                    {isLoading && <Icon name="refresh" className="absolute right-6 top-1/2 -translate-y-1/2 text-indigo-500 animate-spin" size={24} />}
+                                </div>
+                                <button onClick={onClose} className="p-4 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-all"><Icon name="close" size={32} /></button>
+                            </div>
+                            <div className="flex gap-3 justify-center">
+                                {['all', 'movie', 'series'].map(t => (
+                                    <button key={t} onClick={() => setSearchType(t)} className={`px-6 py-2 rounded-xl font-bold uppercase tracking-wider text-xs transition-all ${searchType === t ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-500 hover:text-white'}`}>{t === 'all' ? 'All Sources' : t + 's'}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {results.map((item, idx) => (
+                                <div key={`${item.imdbID || item.id}-${item._sourceMeta?.source || 'unknown'}-${idx}`} onClick={() => onResultClick(item)} className="group p-4 rounded-[2rem] bg-white/5 border border-white/5 hover:border-indigo-500/50 hover:bg-white/10 transition-all cursor-pointer flex gap-6 relative overflow-hidden">
+                                    <div className="w-24 aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shrink-0 shadow-lg relative">
+                                        <img src={getHighResPoster(item.Poster, 200)} width="200" height="300" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        {item.confidence > 50 && <div className="absolute top-1 right-1 bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow">{Math.round(item.confidence)}% Match</div>}
+                                    </div>
+                                    <div className="flex-1 py-2 flex flex-col justify-center relative z-10">
+                                        <div className="flex items-start justify-between"><h4 className="text-xl font-black text-white group-hover:text-indigo-400 transition-colors leading-tight line-clamp-2">{item.Title}</h4></div>
+                                        <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">{item.Year} • {item.Type}</p>
+                                        {item._searchDebug && (
+                                            <div className="mt-2 text-[10px] text-slate-400 space-y-0.5">{item._searchDebug.reasons.slice(0, 3).map(r => (<div key={r}>• {humanizeReason(r)}</div>))}</div>
+                                        )}
+                                        <div className="mt-3 flex flex-wrap gap-2">{item.sourcesUsed?.slice(0, 3).map(s => (<span key={s} className="px-2 py-0.5 rounded bg-white/5 text-[9px] uppercase font-bold text-slate-400">{s}</span>))}</div>
+                                        <div className="mt-3 flex gap-2">{item.inVault && <Badge color="green">In Vault</Badge>}</div>
+                                    </div>
+                                </div>
+                            ))}
+                            {query.length > 2 && results.length === 0 && !isLoading && (
+                                <div className="col-span-full py-20 text-center">
+                                    <h3 className="text-2xl font-black text-slate-700">No matches found</h3>
+                                    <p className="text-slate-500 mt-2 font-medium">We checked TMDB, OMDb, TVMaze, Jikan & MDL.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // SECTION 6: MAIN APPLICATION COMPONENT
+        // ==========================================
+
+        function App() {
+            const [session, setSession] = useState(null);
+            const [vault, setVault] = useState({ watched: {}, watchlist: {} });
+            const [apiKeys, setApiKeys] = useState(DEFAULT_KEYS);
+            const [viewMode, setViewMode] = useState('grid');
+            const [currentView, setCurrentView] = useState(VIEWS.LIBRARY);
+            const [isAdmin, setIsAdmin] = useState(false);
+
+            useEffect(() => {
+                const initAdmin = async () => {
+                    const { data } = await supabase.auth.getUser();
+                    setIsAdmin(isAdminUser(data?.user));
+                };
+                initAdmin();
+            }, []);
+
+            const handleResume = (item, resume) => {
+                const intent = { imdbID: item.imdbID, episodeId: resume.episodeId, season: resume.season, episode: resume.episode, resumeFrom: resume.resumeFrom };
+                console.log("Resume Intent:", intent);
+                alert(`Resuming ${item.Title} S${resume.season}E${resume.episode} at ${Math.round(resume.resumeFrom * 100)}%`);
+            };
+
+            const allVaultItems = useMemo(() => [...Object.values(vault.watched), ...Object.values(vault.watchlist)], [vault]);
+
+            const continueWatching = useMemo(() => {
+                return allVaultItems.map(item => {
+                    if (item.Type !== 'series' || !item.meta?.tvmaze?.episodes || !item.userMeta?.watchHistory) return null;
+                    const resume = getResumeTarget({ episodes: item.meta.tvmaze.episodes, watchHistory: item.userMeta.watchHistory });
+                    if (!resume) return null;
+                    return { item, resume };
+                }).filter(Boolean);
+            }, [allVaultItems]);
+
+            const genreInputs = useMemo(() => {
+                return allVaultItems.map(item => {
+                    let minutes = 0;
+                    if (item.Type === 'movie') {
+                         const runtime = parseInt(item.Runtime) || 0;
+                         if (item.userMeta?.status === 'watched') minutes = runtime || 100;
+                    } else if (item.Type === 'series') {
+                         const progress = calculateEpisodeProgress({ episodes: item.meta?.tvmaze?.episodes || [], watchHistory: item.userMeta?.watchHistory });
+                         minutes = (progress?.watchedEpisodes || 0) * 45; 
+                    }
+                    return { ...item, minutesWatched: minutes };
+                });
+            }, [allVaultItems]);
+
+            const genreProfile = useMemo(() => {
+                const genreItems = extractGenreItems(genreInputs);
+                if (genreItems.length === 0) return null;
+                return getGenreProfile(genreItems, { useRecency: true, recencyHalfLifeDays: 180 });
+            }, [genreInputs]);
+
+            const actorProfile = useMemo(() => {
+                const actorItems = extractActorItems(genreInputs); 
+                if (actorItems.length === 0) return null;
+                const progressMap = buildProgressMap(actorItems);
+                return getActorPopularityProfile({ items: actorItems, progressMap });
+            }, [genreInputs]);
+
+            const asianContent = useMemo(() => { return allVaultItems.filter(i => i.meta?.asian); }, [allVaultItems]);
+            const asianDrama = useMemo(() => { return asianContent.filter(i => /drama/i.test(i.Genre || '')); }, [asianContent]);
+            const anime = useMemo(() => { return allVaultItems.filter(i => i.meta?.anime); }, [allVaultItems]);
+
+            const topActors = useMemo(() => {
+                if (!actorProfile?.percent) return [];
+                return Object.entries(actorProfile.percent).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([actor]) => actor);
+            }, [actorProfile]);
+
+            const actorDrivenRecs = useMemo(() => {
+                return allVaultItems
+                    .filter(i => i.userMeta?.status !== 'watched')
+                    .map(i => ({ item: i, score: actorAffinityScore(i, topActors) }))
+                    .filter(r => r.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .map(r => r.item);
+            }, [allVaultItems, topActors]);
+
+            const topGenres = useMemo(() => {
+                if (!genreProfile?.percent) return [];
+                return Object.entries(genreProfile.percent).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([g]) => g);
+            }, [genreProfile]);
+
+            const recommended = useMemo(() => {
+                if (!topGenres.length) return [];
+                return allVaultItems
+                    .filter(i => i.userMeta?.status !== 'watched')
+                    .map(i => {
+                        let score = genreAffinityScore(i, topGenres);
+                        if (i.meta?.asian?.mdl?.rating >= 8.5) { score += 1.5; }
+                        return { item: i, score };
+                    })
+                    .filter(r => r.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .map(r => r.item)
+                    .slice(0, 5);
+            }, [allVaultItems, topGenres]);
+
+            const exploreOutside = useMemo(() => {
+                if (!topGenres.length) return [];
+                return allVaultItems
+                    .filter(i => {
+                        const itemGenres = extractGenres(i.Genre);
+                        return !itemGenres.some(g => topGenres.includes(g));
+                    })
+                    .slice(0, 5);
+            }, [allVaultItems, topGenres]);
+
+            const approveSuggestion = async (item) => {
+                if (!isAdmin) return;
+                await supabase.from('content_suggestions').update({ status: 'approved', updated_at: new Date() }).eq('id', item.id);
+            };
+
+            const rejectSuggestion = async (item) => {
+                if (!isAdmin) return;
+                await supabase.from('content_suggestions').update({ status: 'rejected', updated_at: new Date() }).eq('id', item.id);
+            };
+
+            function adminClearCache() {
+                if (!isAdmin) return;
+                clearAllCache();
+                console.info("Admin cache cleared");
+            }
+
+            function adminDebugSnapshot() {
+                if (!isAdmin) return;
+                console.table({ user: 'admin', cacheEntries: getCacheStats?.()?.totalEntries, time: new Date().toISOString() });
+            }
+
+            const [isSearchOpen, setIsSearchOpen] = useState(false);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
+            const [isSearchLoading, setIsSearchLoading] = useState(false);
+            const [searchType, setSearchType] = useState('all');
+            const [activeFilter, setActiveFilter] = useState('all'); 
+
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [isAdminSuggestionsOpen, setIsAdminSuggestionsOpen] = useState(false);
+            const [adminSuggestions, setAdminSuggestions] = useState([]); 
+
+            const [isRefreshing, setIsRefreshing] = useState(false);
+            const [refreshProgress, setRefreshProgress] = useState(0);
+            
+            const fetchOmdb = async (imdbID) => {
+                const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKeys.omdb}&i=${imdbID}&plot=full`);
+                return await res.json();
+            };
+
+            const fetchSearch = async (query) => {
+                if (!query || query.length < 3) return;
+                setIsSearchLoading(true);
+                try {
+                    const results = await smartSearch(query, apiKeys, searchType);
+                    setSearchResults(results.map(item => ({
+                        ...item,
+                        inVault: !!(vault.watched[item.imdbID] || vault.watchlist[item.imdbID])
+                    })));
+                } catch (e) { console.error(e); }
+                setIsSearchLoading(false);
+            };
+
+            const fetchTrailer = async (item) => {
+                let tmdbId = item.tmdb?.id;
+                const type = item.Type === 'series' ? 'tv' : 'movie';
+                
+                if (!tmdbId) {
+                   try {
+                       const findRes = await fetch(`https://api.themoviedb.org/3/find/${item.imdbID}?api_key=${apiKeys.tmdb}&external_source=imdb_id`);
+                       const findData = await findRes.json();
+                       const media = item.Type === 'movie' ? findData.movie_results?.[0] : findData.tv_results?.[0];
+                       if(media) tmdbId = media.id;
+                   } catch(e) {}
+                }
+
+                if (!tmdbId) {
+                    alert("Could not find trailer for this title.");
+                    return null;
+                }
+
+                try {
+                    const res = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}/videos?api_key=${apiKeys.tmdb}`);
+                    const data = await res.json();
+                    const trailer = data.results?.find(v => v.type === "Trailer" && v.site === "YouTube") 
+                                 || data.results?.find(v => v.type === "Teaser" && v.site === "YouTube")
+                                 || data.results?.find(v => v.site === "YouTube");
+                    
+                    if (!trailer) {
+                        alert("No YouTube trailer available.");
+                        return null;
+                    }
+                    return trailer.key;
+                } catch(e) { 
+                    alert("Error fetching trailer.");
+                    return null; 
+                }
+            }
+
+            const handlePlayTrailer = async (item) => {
+                const videoId = await fetchTrailer(item);
+                if (videoId) {
+                    window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+                }
+            };
+
+            const updateVaultItem = (id, updatedItem) => {
+                setVault(prev => {
+                    const status = updatedItem.userMeta?.status || 'watchlist';
+                    const newVault = { ...prev };
+                    delete newVault.watched[id];
+                    delete newVault.watchlist[id];
+                    newVault[status][id] = updatedItem;
+                    return newVault;
+                });
+            };
+
+            const enrich = async (item) => {
+                if (item.enriched && item.enrichmentSources?.length > 0) return item;
+                const enrichedItem = await enrichItem(item, apiKeys, supabase, isAdmin);
+                if (enrichedItem) {
+                    updateVaultItem(item.imdbID, enrichedItem);
+                    if (selectedItem?.imdbID === item.imdbID) {
+                        setSelectedItem(enrichedItem);
+                    }
+                    if (session) {
+                        const currentStatus = item.userMeta?.status || 'watchlist';
+                        const updatedUserMeta = { ...enrichedItem, userMeta: { ...enrichedItem.userMeta, status: currentStatus, lastUpdated: Date.now() } };
+                        supabase.from('vault_items').upsert({ user_id: session.user.id, imdb_id: item.imdbID, user_meta: updatedUserMeta, updated_at: new Date() });
+                    }
+                }
+                return enrichedItem;
+            };
+
+            const toggleStatus = (item, newStatus) => {
+                const updated = { ...item, userMeta: { ...item.userMeta, status: newStatus, lastUpdated: Date.now() } };
+                updateVaultItem(item.imdbID, updated);
+                setSelectedItem(updated);
+                if (session) {
+                    supabase.from('vault_items').upsert({ user_id: session.user.id, imdb_id: item.imdbID, user_meta: updated, updated_at: new Date() });
+                }
+            };
+
+            const addToVault = async (imdbID) => {
+                const data = await fetchOmdb(imdbID);
+                if (!data || data.Response === "False") return;
+                let item = { ...data, userMeta: { status: 'watchlist', lastUpdated: Date.now() }, meta: { ratingsExternal: { imdb: data.imdbRating } } };
+                updateVaultItem(imdbID, item);
+                setIsSearchOpen(false);
+                setSelectedItem(item);
+                await enrich(item);
+            };
+
+            const removeFromVault = async (imdbID) => {
+                if (!confirm("Are you sure you want to delete this from your library?")) return;
+                setVault(prev => {
+                    const next = { watched: {...prev.watched}, watchlist: {...prev.watchlist} };
+                    delete next.watched[imdbID];
+                    delete next.watchlist[imdbID];
+                    return next;
+                });
+                setSelectedItem(null); 
+                if (session) {
+                    await supabase.from('vault_items').delete().eq('user_id', session.user.id).eq('imdb_id', imdbID);
+                }
+            };
+
+            const refreshLibrary = async () => {
+                if (isRefreshing) return;
+                setIsRefreshing(true);
+                setRefreshProgress(0);
+                const allItems = [...Object.values(vault.watched), ...Object.values(vault.watchlist)];
+                let processed = 0;
+                for (const item of allItems) {
+                    try {
+                        const freshBase = await fetchOmdb(item.imdbID);
+                        if (freshBase && freshBase.Response === 'True') {
+                            const merged = { ...freshBase, userMeta: item.userMeta, meta: item.meta || {}, tmdb: null, enriched: false };
+                            await enrich(merged);
+                        }
+                    } catch(e) { console.error("Refresh failed for", item.Title, e); }
+                    processed++;
+                    setRefreshProgress(Math.round((processed / allItems.length) * 100));
+                    await new Promise(r => setTimeout(r, 250)); 
+                }
+                setIsRefreshing(false);
+                alert("Library updated successfully!");
+            };
+
+            const handleExport = () => {
+                const dataStr = JSON.stringify(vault, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', `vault_backup_${new Date().toISOString().slice(0,10)}.json`);
+                linkElement.click();
+            };
+
+            const handleImport = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.watched || data.watchlist) { setVault(data); alert("Vault imported successfully! (Local only)"); } 
+                        else { alert("Invalid vault format"); }
+                    } catch (err) { alert("Error reading file"); }
+                };
+                reader.readAsText(file);
+            };
+
+            useEffect(() => {
+                const timer = setTimeout(() => fetchSearch(searchQuery), 500);
+                return () => clearTimeout(timer);
+            }, [searchQuery, searchType]);
+
+            useEffect(() => {
+                supabase.auth.getSession().then(({ data }) => setSession(data.session));
+                supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+            }, []);
+
+            useEffect(() => {
+                if (!session) return;
+                supabase.from('vault_items').select('*').then(({ data }) => {
+                    if (data) {
+                        const newVault = { watched: {}, watchlist: {} };
+                        data.forEach(row => {
+                            const item = row.user_meta;
+                            newVault[item.userMeta.status][item.imdbID] = item;
+                        });
+                        setVault(newVault);
+                    }
+                });
+            }, [session]);
+
+            useEffect(() => {
+                if (selectedItem) {
+                    const freshItem = vault.watched[selectedItem.imdbID] || vault.watchlist[selectedItem.imdbID];
+                    if (freshItem && freshItem !== selectedItem) { setSelectedItem(freshItem); }
+                }
+            }, [vault, selectedItem]);
+
+            const filteredItems = useMemo(() => {
+                const all = [...Object.values(vault.watched), ...Object.values(vault.watchlist)];
+                return all.filter(item => {
+                    if (activeFilter === 'all') return true;
+                    if (activeFilter === 'movies') return item.Type === 'movie';
+                    if (activeFilter === 'shows') return item.Type === 'series';
+                    return true;
+                }).sort((a, b) => (b.userMeta?.lastUpdated || 0) - (a.userMeta?.lastUpdated || 0));
+            }, [vault, activeFilter]);
+
+            return (
+                <div className="min-h-screen bg-vault-950 flex flex-col">
+                    <nav className="sticky top-0 z-50 glass border-b border-white/5 px-6 h-20 flex items-center justify-between">
+                        <div className="flex items-center gap-8">
+                            <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setCurrentView(VIEWS.LIBRARY)}>
+                                <div className="group-hover:scale-110 transition-transform flex items-center justify-center"><VaultLogo size={44} className="text-indigo-500" /></div>
+                                <div className="flex flex-col"><span className="text-xl font-black text-white uppercase tracking-tighter leading-none">The Vault</span><span className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-1">Platinum v9.2</span></div>
+                            </div>
+                            <div className="hidden lg:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5">
+                                <button onClick={() => { setActiveFilter('all'); setCurrentView(VIEWS.LIBRARY); }} className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${activeFilter === 'all' && currentView === VIEWS.LIBRARY ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Library</button>
+                                <button onClick={() => { setActiveFilter('movies'); setCurrentView(VIEWS.LIBRARY); }} className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${activeFilter === 'movies' && currentView === VIEWS.LIBRARY ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Movies</button>
+                                <button onClick={() => { setActiveFilter('shows'); setCurrentView(VIEWS.LIBRARY); }} className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${activeFilter === 'shows' && currentView === VIEWS.LIBRARY ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Series</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setIsSearchOpen(true)} className="w-48 lg:w-64 flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:bg-white/10 transition-all text-sm font-medium"><Icon name="search" size={16} />Search Registry...</button>
+                            <div className="h-10 w-[1px] bg-white/5 mx-2"></div>
+                            {session ? (
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Icon name="settings" /></button>
+                                    <button onClick={() => setCurrentView(VIEWS.PROFILE)} className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white transition ${currentView === VIEWS.PROFILE ? 'bg-indigo-600 shadow-lg shadow-indigo-500/40 scale-105' : 'bg-gradient-to-br from-indigo-500 to-purple-600 hover:scale-105 shadow-lg shadow-indigo-500/30'}`}>{session.user.email?.[0]?.toUpperCase()}</button>
+                                </div>
+                            ) : (
+                                <GlassButton onClick={() => setIsSettingsOpen(true)} active icon="user">Sign In</GlassButton>
+                            )}
+                        </div>
+                    </nav>
+
+                    <main className="flex-1 relative z-10 px-6 md:px-10 max-w-[1400px] mx-auto w-full py-12">
+                        {currentView === VIEWS.PROFILE && session ? (
+                            <ProfileView user={session.user} libraryItems={allVaultItems} onBack={() => setCurrentView(VIEWS.LIBRARY)} />
+                        ) : (
+                            <>
+                                <ContentRail title="Continue Watching" icon="play" items={continueWatching.map(cw => cw.item)} onCardClick={(item) => handleResume(item, continueWatching.find(cw => cw.item.imdbID === item.imdbID).resume)} />
+                                {asianDrama.length > 0 && <ContentRail title="Asian Dramas" icon="globe" items={asianDrama} onCardClick={(item) => { setSelectedItem(item); enrich(item); }} />}
+                                {anime.length > 0 && <ContentRail title="Anime" icon="star" items={anime} onCardClick={(item) => { setSelectedItem(item); enrich(item); }} />}
+                                {genreProfile?.totalWeight > 50 && (
+                                    <>
+                                        <ContentRail title="Actor Spotlight" icon="user" items={actorDrivenRecs} onCardClick={(item) => { setSelectedItem(item); enrich(item); }} />
+                                        <ContentRail title="Recommended for You" icon="star" items={recommended} onCardClick={(item) => { setSelectedItem(item); enrich(item); }} />
+                                        <ContentRail title="Outside Comfort Zone" icon="globe" items={exploreOutside} onCardClick={(item) => { setSelectedItem(item); enrich(item); }} />
+                                    </>
+                                )}
+                                {filteredItems.length > 0 && activeFilter === 'all' && (
+                                    <section className="mb-16 animate-reveal">
+                                        <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden group shadow-2xl">
+                                            <img src={tmdbImg(filteredItems[0].tmdb?.credits?.images?.backdrops?.[0]?.file_path, "original") || getHighResPoster(filteredItems[0].Poster, 1000)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-vault-950 via-vault-950/40 to-transparent"></div>
+                                            <div className="absolute bottom-12 left-12 right-12 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                                                <div className="max-w-2xl">
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <Badge color="gold">Spotlight</Badge>
+                                                        <Badge color="indigo">{filteredItems[0].Year}</Badge>
+                                                        <span className="text-white/60 text-sm font-bold tracking-widest uppercase">{filteredItems[0].Genre}</span>
+                                                    </div>
+                                                    <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tight mb-4">{filteredItems[0].Title}</h2>
+                                                    <p className="text-slate-400 text-lg line-clamp-3 mb-8">{filteredItems[0].Plot}</p>
+                                                    <div className="flex gap-4">
+                                                        <button onClick={() => setSelectedItem(filteredItems[0])} className="px-8 py-4 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-white/10">View Details</button>
+                                                        <button onClick={() => handlePlayTrailer(filteredItems[0])} className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border border-white/10 font-black uppercase tracking-widest rounded-2xl hover:bg-white/20 transition-all flex items-center gap-2"><Icon name="play" size={20} /> Watch Trailer</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                )}
+                                <section className="space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-2xl font-black text-white flex items-center gap-3">Your Library<span className="px-2 py-0.5 rounded-md bg-white/5 text-slate-500 text-xs font-bold uppercase">{filteredItems.length} Items</span></h3>
+                                        <div className="flex items-center gap-3">
+                                            <GlassButton active={viewMode === 'grid'} onClick={() => setViewMode('grid')} icon="grid">Grid</GlassButton>
+                                            <GlassButton active={viewMode === 'timeline'} onClick={() => setViewMode('timeline')} icon="list">Timeline</GlassButton>
+                                        </div>
+                                    </div>
+                                    {filteredItems.length === 0 ? (
+                                        <div className="py-40 flex flex-col items-center text-center">
+                                            <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 flex items-center justify-center text-slate-700 mb-6"><Icon name="database" size={48} /></div>
+                                            <h4 className="text-2xl font-black text-slate-400 uppercase tracking-widest">Vault is Empty</h4>
+                                            <p className="text-slate-600 mt-2 font-medium">Search for movies or shows to start your collection.</p>
+                                            <button onClick={() => setIsSearchOpen(true)} className="mt-8 px-6 py-3 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-bold hover:bg-indigo-600 hover:text-white transition-all">Add First Title</button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-8 gap-y-12">
+                                            {filteredItems.map(item => (
+                                                <MediaCard key={item.imdbID || item.id} item={item} isAdmin={isAdmin} onClick={() => { setSelectedItem(item); enrich(item); }} onPlayTrailer={handlePlayTrailer} onAdminEdit={(i) => console.log("Edit", i)} onResume={handleResume} />
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            </>
+                        )}
+                    </main>
+
+                    <DetailModal item={selectedItem} onClose={() => setSelectedItem(null)} onUpdateStatus={toggleStatus} onRemove={removeFromVault} isAdmin={isAdmin} watchHistory={vault.watched} topActors={topActors} />
+                    <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} query={searchQuery} setQuery={setSearchQuery} results={searchResults} onResultClick={(item) => item.inVault ? setSelectedItem(vault.watched[item.imdbID] || vault.watchlist[item.imdbID]) : addToVault(item.imdbID)} isLoading={isSearchLoading} searchType={searchType} setSearchType={setSearchType} />
+                    <AdminSuggestionsModal isOpen={isAdminSuggestionsOpen} onClose={() => setIsAdminSuggestionsOpen(false)} suggestions={adminSuggestions} onApprove={approveSuggestion} onReject={rejectSuggestion} />
+                    
+                    {isSettingsOpen && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-lg" onClick={() => setIsSettingsOpen(false)}></div>
+                            <div className="relative w-full max-w-md glass rounded-[2.5rem] p-10 animate-reveal">
+                                <div className="flex flex-col items-center text-center mb-10">
+                                    <div className="mb-6"><VaultLogo size={64} className="text-indigo-500" /></div>
+                                    <h3 className="text-3xl font-black text-white">Vault Access</h3>
+                                    <p className="text-slate-500 font-medium mt-2">Manage your collection across devices</p>
+                                </div>
+                                {session ? (
+                                    <div className="space-y-4">
+                                        {isAdmin && <CacheHealthPanel />}
+                                        <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div><p className="text-sm font-bold text-white">Library Maintenance</p><p className="text-xs text-slate-500">Update metadata for all items</p></div>
+                                                <button onClick={refreshLibrary} disabled={isRefreshing} className="px-4 py-2 bg-indigo-600 rounded-xl text-white text-xs font-bold disabled:opacity-50">{isRefreshing ? `${refreshProgress}%` : 'Refresh All'}</button>
+                                            </div>
+                                            {isRefreshing && (<div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 transition-all duration-300" style={{width: `${refreshProgress}%`}}></div></div>)}
+                                        </div>
+                                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">API Configuration</h4>
+                                            <input type="text" placeholder="OMDb API Key" value={apiKeys.omdb} onChange={(e) => setApiKeys({...apiKeys, omdb: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none" />
+                                            <input type="text" placeholder="TMDB API Key" value={apiKeys.tmdb} onChange={(e) => setApiKeys({...apiKeys, tmdb: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none" />
+                                            <input type="text" placeholder="RapidAPI Key (MDL)" value={apiKeys.rapid} onChange={(e) => setApiKeys({...apiKeys, rapid: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none" />
+                                            {isAdmin && <button onClick={adminClearCache} className="w-full px-4 py-2 rounded-xl bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold uppercase tracking-wider">Clear Cache</button>}
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button onClick={handleExport} className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-all">Export JSON</button>
+                                            <label className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-all text-center cursor-pointer">Import JSON<input type="file" onChange={handleImport} className="hidden" accept=".json" /></label>
+                                        </div>
+                                        {isAdmin && <button onClick={() => { setIsSettingsOpen(false); setIsAdminSuggestionsOpen(true); }} className="w-full py-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm font-bold hover:bg-indigo-500 hover:text-white transition-all">Open Admin Dashboard</button>}
+                                        <div className="p-6 rounded-3xl bg-white/5 border border-white/5"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Signed in as</p><p className="text-white font-bold">{session.user.email}</p></div>
+                                        <button onClick={() => supabase.auth.signOut()} className="w-full py-5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">Sign Out</button>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        const email = e.target.email.value;
+                                        const password = e.target.password.value;
+                                        const { error } = await supabase.auth.signInWithPassword({ email, password });
+                                        if (error) alert(error.message);
+                                        else setIsSettingsOpen(false);
+                                    }} className="space-y-4">
+                                        <input type="email" name="email" placeholder="Email Address" className="w-full bg-white/5 border border-white/5 focus:border-indigo-500 rounded-2xl p-4 text-white outline-none" required />
+                                        <input type="password" name="password" placeholder="Password" className="w-full bg-white/5 border border-white/5 focus:border-indigo-500 rounded-2xl p-4 text-white outline-none" required />
+                                        <button type="submit" className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/30 hover:-translate-y-1 transition-all">Unlock Vault</button>
+                                    </form>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
